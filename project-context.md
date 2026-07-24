@@ -84,7 +84,7 @@ Branch: main
 ## Key decisions made
 - 2026-07-15 — Project initialized
 - 2026-07-15 — Architecture: CLI + Markdown filesystem (HQ) as source of truth, no database/server/frontend
-- 2026-07-15 — GitHub sync target set to https://github.com/jtball85-png/Minivan-Dads
+- 2026-07-15 — GitHub sync target set to https://github.com/jtball85-png/Minivan-Dads; renamed 2026-07-24 to https://github.com/jtball85-png/Josh-Ball-Art-Brain (origin remote updated)
 
 ## Known issues
 None blocking. Watch items: first scheduled market_intel run fires Thursday night — ESC-003 in the escalation queue is the reminder to verify it Friday before `brain ingest`; ESC-002 (trademark prior-use of "minivan dad"/"swagger wagon" phrasing) awaits a CEO ruling at the first real board meeting.
