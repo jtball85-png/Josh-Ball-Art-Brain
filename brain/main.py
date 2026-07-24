@@ -59,7 +59,7 @@ def cmd_status(hq: HQ) -> None:
     week = hq.current_week_key()
     statuses = hq.reports_status(week)
 
-    print(f"=== Minivan Dads — Status ({week}) ===\n")
+    print(f"=== Josh Ball Art — Status ({week}) ===\n")
     print("Departments:")
     for dept, status in statuses.items():
         print(f"  {dept:<15} {status.value}")
@@ -444,7 +444,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="brain",
         formatter_class=fmt,
         description=(
-            "The Minivan Dads COO.\n\n"
+            "The Josh Ball Art COO.\n\n"
             "The weekly rhythm:\n"
             "  1. Department reports land in hq/reports/{dept}/{week}.md\n"
             "  2. brain ingest    -> writes this week's board-meeting agenda\n"

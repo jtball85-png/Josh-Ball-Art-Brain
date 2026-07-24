@@ -47,7 +47,7 @@ def _directive_git_history(hq_root: Path, dept: str) -> list[dict]:
 
 
 def create_app(config: BrainConfig, hq: HQ) -> FastAPI:
-    app = FastAPI(title="Minivan Dads — CEO Console", docs_url=None, redoc_url=None)
+    app = FastAPI(title="Josh Ball Art — CEO Console", docs_url=None, redoc_url=None)
     app.state.chat_error = "chat routes not registered"  # cleared by cmd_dashboard on success
 
     @app.get("/api/health")

@@ -679,9 +679,9 @@ async function checkHealth() {
     banner.style.borderColor = "var(--coral)";
     banner.innerHTML =
       `<h2 style="color:var(--coral)">restart needed</h2>
-       <div style="font-size:12px">${problem} Close the "Minivan Dads HQ" ` +
+       <div style="font-size:12px">${problem} Close the "Josh Ball Art HQ" ` +
       `window on your taskbar (or restart your PC), double-click ` +
-      `<code>Minivan Dads HQ.bat</code> again, and refresh this page. If it ` +
+      `<code>Josh Ball Art HQ.bat</code> again, and refresh this page. If it ` +
       `persists, <code>dashboard_startup.log</code> in the project folder ` +
       `says exactly what went wrong — paste it to Claude Code.</div>`;
     document.querySelector(".app").insertBefore(banner, document.querySelector("nav"));

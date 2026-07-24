@@ -40,7 +40,7 @@ jobs:
         id: commit
         run: |
           git config user.name "market-intel-agent"
-          git config user.email "agent@minivan-dads.invalid"
+          git config user.email "agent@josh-ball-art.invalid"
           git add hq/reports/ hq/escalations/
           if git diff --cached --quiet; then
             echo "Nothing new to commit."
@@ -62,7 +62,7 @@ jobs:
             --title "Market Intel filed its report ($(date -u +%Y-%m-%d))" \
             --body "The scheduled research run finished and committed its report to HQ.
 
-          Next step: open your console (Minivan Dads HQ.bat) — the sync banner will offer one click to pull it in and build the agenda. Or run #ingest yourself.
+          Next step: open your console (Josh Ball Art HQ.bat) — the sync banner will offer one click to pull it in and build the agenda. Or run #ingest yourself.
 
           Report: https://github.com/${{ github.repository }}/tree/main/hq/reports/market_intel" \
             || echo "Issue creation failed (non-fatal)."

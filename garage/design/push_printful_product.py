@@ -4,8 +4,8 @@ constants (generalizes the one-off create_printful_product.py used for the
 quiet-game tee on 2026-07-20 — same 5 governed steps, now reusable).
 
 Spec files live in garage/design/pushes/*.yaml — one per push, a durable
-record of every product attempt. See quiet-game-tee.yaml for the reference
-shape.
+record of every product attempt. See minivandads/designs/quiet-game-tee.yaml
+for the reference shape (the MVD-era tee this driver was generalized from).
 
 Modes:
   (default)   dry-run only — resolves real variants, submits through the

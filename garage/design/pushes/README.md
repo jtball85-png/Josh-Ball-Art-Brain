@@ -10,7 +10,7 @@ Unicode double-prime (″), not a straight quote.
 
 | Spec | Product (catalog id) | Status | Blocker |
 |---|---|---|---|
-| `quiet-game-tee.yaml` | Bella+Canvas 3001 tee (71) | historical — pushed 2026-07-20, MVD era, parked | — |
+| [`minivandads/designs/quiet-game-tee.yaml`](../../../minivandads/designs/quiet-game-tee.yaml) | Bella+Canvas 3001 tee (71) | historical — pushed 2026-07-20, MVD era, parked | — |
 | `bodysurf-fin-water-bottle.yaml` | Stainless Steel Water Bottle (382) | prepared + dry-run rehearsed | needs JBA Printful token + hosted print file |
 | `bodysurf-fin-die-cut-stickers.yaml` | Die-Cut Stickers (957) | prepared + dry-run rehearsed | needs JBA token + a TRANSPARENT print file (see spec) |
 | `bodysurf-fin-tee.yaml` | Bella+Canvas 3001 tee (71) | prepared | needs JBA token + print file exported from the drive's finished tee art |

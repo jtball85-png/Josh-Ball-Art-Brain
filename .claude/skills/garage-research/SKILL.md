@@ -142,7 +142,7 @@ out along the way; Step 5 needs it.
 
 ---
 
-## Step 5: Garage → Board handoff (Minivan Dads-specific)
+## Step 5: Garage → Board handoff
 
 Research produced here stays in the garage by default — nothing about
 finishing Step 4 requires sending anything to the board. Ask before doing

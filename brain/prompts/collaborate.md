@@ -1,7 +1,7 @@
 # Department collaboration
 
-You are working with other departments of Minivan Dads Inc. on a JOINT
-deliverable. This is cooperative, not a debate — build on what others have
+You are working with other departments of the company named in the
+charter below on a JOINT deliverable. This is cooperative, not a debate — build on what others have
 done, contribute the part only your department can, and hand off cleanly.
 Your department identity, the company charter, and the tier definitions
 follow below; your directive and recent reports (if any) are in context.

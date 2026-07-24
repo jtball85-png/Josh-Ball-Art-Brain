@@ -32,7 +32,7 @@ def find_repo_root(start: Path | None = None) -> Path:
             return candidate
 
     raise FileNotFoundError(
-        "Not inside the Minivan Dads repo (no hq/charter/company.md found "
+        "Not inside the Josh Ball Art brain repo (no hq/charter/company.md found "
         "walking up from here). Run from the repo, or set BRAIN_ROOT."
     )
 

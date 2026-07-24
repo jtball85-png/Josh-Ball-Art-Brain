@@ -28,7 +28,7 @@ from typing import Callable
 from brain.actions.models import ActionType
 
 BASE_URL = "https://api.printful.com"
-USER_AGENT = "MinivanDads/1.0 (governed Printful connector)"
+USER_AGENT = "JBA-brain/1.0 (governed Printful connector)"
 
 
 class PrintfulError(RuntimeError):
