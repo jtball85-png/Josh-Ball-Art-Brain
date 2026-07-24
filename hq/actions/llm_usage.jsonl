@@ -10,3 +10,8 @@
 {"timestamp": "2026-07-23T16:27:56", "command": "agent:storefront", "model": "claude-sonnet-5", "input_tokens": 15325, "output_tokens": 4392, "cache_creation_input_tokens": 6614, "cache_read_input_tokens": 0}
 {"timestamp": "2026-07-23T16:29:29", "command": "agent:storefront", "model": "claude-sonnet-5", "input_tokens": 4, "output_tokens": 8036, "cache_creation_input_tokens": 34098, "cache_read_input_tokens": 40841}
 {"timestamp": "2026-07-23T16:32:11", "command": "ingest", "model": "claude-sonnet-5", "input_tokens": 20543, "output_tokens": 13554, "cache_creation_input_tokens": 3361, "cache_read_input_tokens": 0}
+{"timestamp": "2026-07-24T15:41:00", "command": "ingest", "model": "claude-sonnet-5", "input_tokens": 23175, "output_tokens": 11078, "cache_creation_input_tokens": 3361, "cache_read_input_tokens": 0}
+{"timestamp": "2026-07-24T15:42:50", "command": "boardroom", "model": "claude-sonnet-5", "input_tokens": 101, "output_tokens": 162, "cache_creation_input_tokens": 2479, "cache_read_input_tokens": 0}
+{"timestamp": "2026-07-24T15:43:57", "command": "boardroom", "model": "claude-sonnet-5", "input_tokens": 103, "output_tokens": 171, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 2479}
+{"timestamp": "2026-07-24T15:51:46", "command": "ingest", "model": "claude-sonnet-5", "input_tokens": 23175, "output_tokens": 12868, "cache_creation_input_tokens": 3361, "cache_read_input_tokens": 0}
+{"timestamp": "2026-07-24T15:55:06", "command": "meeting", "model": "claude-sonnet-5", "input_tokens": 26438, "output_tokens": 3532, "cache_creation_input_tokens": 3093, "cache_read_input_tokens": 0}

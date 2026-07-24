@@ -103,3 +103,28 @@ Format per entry:
 - Rationale: POD apparel margins are structurally thin and the CEO owns an established art practice (Josh Ball Art: joshballart.com, socials, Jacquard sponsorship, Legion Paper collaboration, Ventura community) where the same machinery serves far better economics. A full site/store/social audit (2026-07-21) showed proven demand for originals (all sold), a supplies-heavy store, and no purchasable hero art — the inverted-store problem this pivot fixes. Strategy ratified by the CEO: originals + giclee prints (mostly B&W photography, plus cyanotype prints priced as photos) first, workshops second, POD third under a margin floor, Jacquard shop maintained; board to run 75–80% of day-to-day. Minivan Dads is PARKED, not killed: the quiet-game tee stays unpublished in Printful, all HQ history preserved in git, charter archived to hq/charter/archive/. Print-partner direction: Prodigi-first pending CEO-judged samples (B&W neutrality is the key test); gicleetoday retained for hand-touched runs.
 - Decided by: CEO
 - Affected departments: all
+
+## 2026-07-24 — Rejected: Publish Neptune's Garden giclée listings
+- Rationale: CEO wants the Josh Ball Art charter and brand direction firmly settled before committing specific saleable items to the storefront — this is a pause on commerce specifics, not a finding that the listings or the open 5×7 sizing question are unresolved on their own merits.
+- Decided by: CEO
+- Affected departments: storefront
+
+## 2026-07-24 — POD mug/enamel-cup margin review and reprice
+- Rationale: Published third-party cost estimates put the current mug/enamel-cup pricing anywhere from comfortably above to well under the charter's 30% margin floor; approved obtaining real Printful COGS and executing storefront's proposed reprice (~$12–13 mug, ~$18 enamel cup) if the floor is breached.
+- Decided by: CEO
+- Affected departments: storefront
+
+## 2026-07-24 — Rejected: Outdoor workshop permit and insurance budget
+- Rationale: CEO judged the company not ready for workshop-specific commitments yet, despite the real ~30-business-day permit lead time and seasonal window market_intel flagged; budget authorization is explicitly withheld rather than deferred to a set date.
+- Decided by: CEO
+- Affected departments: market_intel, creative
+
+## 2026-07-24 — Ratify printful.create_product capability demotion
+- Rationale: Accepted the executor's automatic safety demotion (supervised → dry_run) following two rollbacks (ACT-2026-W30-0002, -0004) as a sound precaution pending understanding of the rollback cause.
+- Decided by: brain (ratified at board meeting)
+- Affected departments: creative, storefront
+
+## 2026-07-24 — Close stale Minivan Dads escalations as moot
+- Rationale: All eight escalations concern trademark/handle/domain/pricing work under the now-parked Minivan Dads identity per the 2026-07-21 pivot decision; closing administratively avoids carrying dead-brand items in the active queue. Reopen only if Minivan Dads is revived.
+- Decided by: CEO
+- Affected departments: market_intel, creative, product, finance
