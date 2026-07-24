@@ -23,6 +23,74 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
+## Session — 2026-07-24
+
+**Focus:** CEO reported having completed items from a prior memory list (API-key
+hygiene); asked to live-check that the dashboard console reads Josh Ball Art
+(it did, after a stale-browser-cache false alarm was ruled out); then directed
+that the board be able to manage all product matters including pricing, with
+the CEO always checked first before action, and — new — CEO approval should
+execute the change itself with no manual re-apply in Printful/Shopify.
+
+**Decisions made:**
+- CEO ruled: board proposes pricing/product changes, CEO sign-off stays
+  mandatory (no change to that gate), but once the CEO approves, the system
+  executes it — closing the "approve in the meeting, then go retype it by
+  hand" gap. Implemented as `Executor.approve_action()`: it can only ever
+  unlock an action that was rejected *solely* for being outside its agent's
+  allowed_actions (hard denials, bad params, suspended agents still block it).
+
+**Problems solved:**
+- Found `hq.resolve_escalation()` only ever wrote a text note — there was no
+  code path anywhere from "CEO approved" to an actual write. Closed it:
+  `EscalationItem.action_ref` links an escalation back to its rejected
+  action; the dashboard's new `/api/escalations/{id}/approve|deny` endpoints
+  execute or resolve for real; console UI added to the escalation inbox.
+- `shopify.set_price` was registered but deliberately unimplemented (its own
+  docstring said so) — implemented for real via `productVariantsBulkUpdate`,
+  since Shopify is JBA's actual storefront and Printful-side pricing alone
+  wouldn't have made the feature do anything real for this store.
+- Charter and storefront directive text updated to match the new policy.
+
+**Approaches discussed:**
+- Considered letting the board meeting's free-text LLM-drafted escalation
+  resolution ("approved"/"denied" prose) drive execution, but rejected it —
+  matching the codebase's own "governance is code, not prompts" principle,
+  execution is gated by a structured dashboard Approve/Deny action instead,
+  never by parsing LLM prose.
+
+**Left unresolved:**
+- The API-key hygiene items from the prior session's memory (Anthropic key
+  consolidation, Printful JBA token `product_templates/read` scope, token
+  rotation) were never actually re-verified this session — the CEO said "I
+  did it" but the conversation moved to the console check and then the
+  pricing feature before confirming which items were done. Still needs a
+  real check next session — see `revisit-api-keys` memory.
+- `brain.exe` (the compiled console-script entrypoint) is broken — crashes
+  silently with exit code 1, no stdout/stderr at all. `python -m brain` works
+  fine; likely needs `.venv/Scripts/pip install -e ".[dev]"` re-run. Not fixed
+  this session (unrelated to the task at hand).
+- The new approve-and-execute path has not been exercised against the real
+  live Shopify store — only against fakes/tests. First real use should be a
+  low-stakes test listing, not a live product.
+- Storefront's directive now tells it to propose prices as structured
+  ACTION blocks, but the agent hasn't actually run under that updated
+  directive yet — first real proposal will be the real test of the whole
+  loop end to end.
+
+**Files changed this session:**
+```
+14 files changed, 534 insertions(+), 37 deletions(-)
+(1 commit: a173a63 — Board can propose product/pricing changes; CEO approval
+executes them)
+brain/connectors/shopify.py, brain/dashboard/app.py,
+brain/dashboard/static/app.js, brain/dashboard/static/style.css,
+brain/executor.py, brain/hq.py, brain/main.py, brain/models.py,
+hq/charter/company.md, hq/directives/storefront.md,
+tests/test_dashboard.py, tests/test_executor.py,
+tests/test_hq_escalations.py, tests/test_shopify_connector.py
+```
+
 ## Session — 2026-07-23
 
 **Focus:** CEO directed the drive-asset handoff (D:\Products\Printful Products), asked the brain to manage the design-to-POD workflow, then to review live products and ultimately run the full joshballart.com Shopify store (pics, descriptions, SEO, pricing), and finally to run the review through the board.

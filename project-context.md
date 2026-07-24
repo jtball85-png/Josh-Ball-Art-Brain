@@ -1,5 +1,5 @@
 # Project: Minivan Dads — The Brain (COO)
-Last updated: 2026-07-23 by Claude Code
+Last updated: 2026-07-24 by Claude Code
 
 ## What this project is
 Minivan Dads Inc. is a print-on-demand apparel brand (Printful catalog, "Old Guys Rule" playbook) targeting minivan-driving dads, aiming for $200k+/yr net income or a seven-figure exit. This project is "The Brain" — Phase 1 of a multi-agent company system: a CLI orchestrator (COO) plus HQ, a git-diffable Markdown filesystem that is the company's single source of truth. Future department agents (Market Intel, Creative, Content, Product, Storefront, Customer, Paid Ads, Finance) will read directives from and write reports to HQ in later phases — not built yet, but the Phase 1 design must not box them out.
@@ -46,8 +46,8 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: 7482c89 — Fix silent empty-output bug (LLMTruncated); board cycle run for W30
-In progress: uncommitted — garage/prints/masters/Test.jpg (CEO's real test photo), garage/prints/proofs/Test-proof.jpg, garage/prints/ready/Test/ (derived sizes); garage/prints/masters/sample-photo.jpg shows as deleted but uncommitted
+Last commit: a173a63 — Board can propose product/pricing changes; CEO approval executes them
+In progress: uncommitted — garage/prints/masters/Test.jpg, garage/prints/proofs/Test-proof.jpg, garage/prints/ready/Test/; garage/prints/masters/sample-photo.jpg shows as deleted but uncommitted
 Branch: main
 
 ## What's next
@@ -105,6 +105,7 @@ Browser tasks, desktop automation, file management.
 Use project-context-updater.html on Cowork-heavy days.
 
 ## Change log
+- 2026-07-24 — Board can propose product/pricing changes including price; CEO approval now executes the change for real instead of requiring a manual re-apply — `Executor.approve_action()` (allowlist-only bypass, hard denials/bad params/suspended agents still block it), `EscalationItem.action_ref`, `shopify.set_price` implemented for real (was registered but deliberately unimplemented), dashboard `/api/escalations/{id}/approve|deny` + console UI, charter + storefront directive text updated (a173a63) — Source: Claude Code
 - 2026-07-23 — Managed design-to-POD asset system built (real Bodysurf Fin SVG master curated, drive manifest + junk cleanup, spec-driven push driver, dry-run rehearsed) (ec0369b, ef81b39); JBA Printful token wired — 7 live products + 11 saved templates read, manifest corrected (beanie/poster/can-cooler) (4d8268c, 87d00db); live-store margin audit vs 30% floor — 97/189 variants below, recs escalated (739894e); Shopify Admin API token captured via local OAuth exchange, GraphQL connector built with governed copy/image actions, full 107-product store synced, first dry-run listing edit logged (b5d8de0); silent empty-output bug found and fixed (LLMTruncated + caps raised + regression tests) and the W30 board cycle run — agenda with 4 [CEO REQUIRED] decisions awaiting the meeting (7482c89) — Source: Claude Code
 - 2026-07-21 — Garage-design recreation attempt of Josh Ball Art's existing "Bodysurf Fin" design (from a reference photo, no source file) tested and rejected by the CEO as a poor visual match; draft files deleted, nothing created or published. Live store check confirmed the design's 7 real color combos for future reference. Confirmed no Shopify connector/MCP exists yet — building one needs a CEO-created Admin API token first — Source: Claude Code
 - 2026-07-21 — Company pivot ratified: the brain now runs Josh Ball Art (charter rewritten, Minivan Dads archived/parked, decision logged) (d228bef); print-derivation pipeline built (master -> 8x10/11x14/16x20 white-border files, DPI-floor honesty check) (b839e10); printable 2-page Lightroom-to-print workflow cheat sheet added (7f84cf5), then fixed after the hosted Artifact's print button proved non-functional in its sandbox (21b9c39); added a real print-QA gate (verify_print.py, headless-Edge render + page-count/size check) and shipped a pre-verified PDF rather than trust the hosted print path (846ad60) — Source: Claude Code
