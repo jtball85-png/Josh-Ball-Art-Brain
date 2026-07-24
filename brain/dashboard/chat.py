@@ -463,20 +463,7 @@ def register_chat_routes(app: FastAPI, config: BrainConfig, hq: HQ, make_llm) ->
             raise HTTPException(status_code=409, detail="No meeting in progress — start one first.")
         return meeting_state["session"]
 
-    @app.post("/api/meeting/start")
-    def meeting_start():
-        from brain.meeting import MeetingSession
-
-        if meeting_state["session"] is not None:
-            raise HTTPException(status_code=409,
-                                detail="A meeting is already in progress — close or abandon it first.")
-        session = MeetingSession(make_llm(command="meeting"), config, hq)
-        try:
-            items = session.load_agenda()
-        except FileNotFoundError as e:
-            raise HTTPException(status_code=404, detail=str(e))
-        meeting_state["session"] = session
-
+    def _meeting_payload(session, resumed: bool) -> dict:
         # The briefing = everything the brain prepared BESIDES the decision
         # blocks (department syntheses, cross-department notes, escalation
         # triage). The CEO reads the evidence before ruling on conclusions.
@@ -488,15 +475,36 @@ def register_chat_routes(app: FastAPI, config: BrainConfig, hq: HQ, make_llm) ->
         triage_cut = agenda.find("## Escalation Triage")
         if triage_cut != -1 and triage_cut > cut:
             briefing += "\n\n" + agenda[triage_cut:].strip()
-
         return {
             "week": session.week,
             "briefing": briefing,
+            "resumed": resumed,
             "items": [
-                {"id": i.id, "title": i.title, "block_text": i.block_text, "tag": i.tag}
-                for i in items
+                {"id": i.id, "title": i.title, "block_text": i.block_text,
+                 "tag": i.tag, "ruled": i.ruling is not None,
+                 "ruling": i.ruling.action if i.ruling is not None else None}
+                for i in session.items
             ],
         }
+
+    @app.post("/api/meeting/start")
+    def meeting_start():
+        from brain.meeting import MeetingSession
+
+        if meeting_state["session"] is not None:
+            # Resume, don't strand: the browser may have reloaded (or a second
+            # tab opened) and lost its client-side copy of the meeting — the
+            # server session, including any rulings already recorded, is still
+            # the live one. Re-serve it so the CEO continues where they were
+            # (2026-07-24: the CEO hit the old 409 with no way back in).
+            return _meeting_payload(meeting_state["session"], resumed=True)
+        session = MeetingSession(make_llm(command="meeting"), config, hq)
+        try:
+            session.load_agenda()
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        meeting_state["session"] = session
+        return _meeting_payload(session, resumed=False)
 
     @app.post("/api/meeting/discuss")
     def meeting_discuss(body: MeetingDiscussRequest):

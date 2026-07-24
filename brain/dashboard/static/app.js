@@ -890,8 +890,11 @@ async function cmdMeeting() {
     return;
   }
   const data = await response.json();
-  workSys(`#meeting — board meeting ${data.week} · ${data.items.length} item(s).`);
-  if (data.briefing) {
+  const ruled = data.items.filter((i) => i.ruled).length;
+  workSys(data.resumed
+    ? `#meeting — resuming the in-progress ${data.week} meeting · ${ruled}/${data.items.length} item(s) already ruled.`
+    : `#meeting — board meeting ${data.week} · ${data.items.length} item(s).`);
+  if (data.briefing && !data.resumed) {
     workShow();
     const card = document.createElement("div");
     card.className = "card";
@@ -901,8 +904,17 @@ async function cmdMeeting() {
     card.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   meetingItems = data.items;
-  meetingIndex = 0;
-  workChipSet("read the briefing, then take the first item", [
+  const firstUnruled = data.items.findIndex((i) => !i.ruled);
+  if (firstUnruled === -1) {
+    // Every item already ruled — the only thing left is the close.
+    meetingIndex = data.items.length;
+    workChipSet("all items already ruled — close the meeting to write the records", [
+      { label: "Close meeting", primary: true, go: () => meetingClose({}) },
+    ]);
+    return;
+  }
+  meetingIndex = firstUnruled;
+  workChipSet(data.resumed ? "picking up at the first unruled item" : "read the briefing, then take the first item", [
     { label: "Begin rulings", primary: true, go: meetingShowItem },
   ]);
 }
