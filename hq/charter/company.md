@@ -47,11 +47,18 @@ painter "Artist Josh Ball" — never compete on the bare name).
 
 ## Decision boundaries (hard rules, enforced in code)
 
-CEO-ONLY, always: spending money (samples, ads, supplies), pricing changes,
-brand identity, legal commitments, account creation, and PUBLISHING — with one
-deliberate carve-out: blog posts may graduate to auto-publish after the CEO has
-approved enough consecutive drafts to trust the voice (earned capability,
-revocable, like any other rung).
+The board manages all product matters — including pricing — as part of its
+normal work: proposing prices, catalog health, and listing changes across
+every revenue line. But spending money (samples, ads, supplies), pricing
+changes, brand identity, legal commitments, and account creation always,
+without exception, require the CEO's explicit sign-off before anything
+happens — the board proposes, it never decides these for itself. Once the
+CEO approves, the system applies the change itself; the CEO is never expected
+to go re-type a board-recommended, CEO-approved number into Printful or
+Shopify by hand. PUBLISHING is CEO-only too, with one deliberate carve-out:
+blog posts may graduate to auto-publish after the CEO has approved enough
+consecutive drafts to trust the voice (earned capability, revocable, like any
+other rung).
 
 The art itself is never a board matter. No agent critiques, alters, or
 generates the artwork. Departments work on everything *around* the art.

@@ -10,9 +10,12 @@ Scope of this connector mirrors the registry exactly:
 - shopify.update_listing_copy  — title / descriptionHtml / SEO, reversible
   (read_state snapshots the current values; restore re-applies them).
 - shopify.update_listing_images — image alt text + order, reversible.
-- shopify.set_price is registered but in NO agent's allowed_actions
-  (brain/actions/limits.yaml), so the executor escalates it to the CEO —
-  this connector deliberately does not implement it.
+- shopify.set_price — every variant on the product to one new price,
+  reversible (read_state snapshots each variant's current price). Absent
+  from every agent's allowed_actions (brain/actions/limits.yaml) like every
+  other money action, so the executor always rejects-and-escalates a
+  proposed price change — it only ever runs live via the executor's CEO
+  approval override (Executor.approve_action), never autonomously.
 
 Auth: SHOPIFY_ACCESS_TOKEN + SHOPIFY_STORE_DOMAIN from the environment
 (.env). Same injectable-transport pattern as the Printful connector, so
@@ -161,6 +164,10 @@ class ShopifyConnector:
             media = [{"id": e["node"]["id"], "alt": e["node"].get("alt")}
                      for e in product["media"]["edges"]]
             return {"product_id": params["product_id"], "media": media}
+        if action_type.name == "shopify.set_price":
+            variants = [{"id": e["node"]["id"], "price": e["node"]["price"]}
+                       for e in product["variants"]["edges"]]
+            return {"product_id": params["product_id"], "variants": variants}
         raise ShopifyError(0, f"unhandled snapshot for {action_type.name!r}")
 
     def execute(self, action_type: ActionType, params: dict) -> dict:
@@ -171,6 +178,10 @@ class ShopifyConnector:
                 seo_description=params.get("seo"))
         if action_type.name == "shopify.update_listing_images":
             return self._update_images(params["product_id"], params["images"])
+        if action_type.name == "shopify.set_price":
+            product = self.get_product(params["product_id"])
+            variant_ids = [e["node"]["id"] for e in product["variants"]["edges"]]
+            return self._update_price(params["product_id"], variant_ids, params["new_price"])
         raise ShopifyError(0, f"unhandled action {action_type.name!r}")
 
     def restore(self, action_type: ActionType, snapshot: dict) -> dict:
@@ -187,6 +198,14 @@ class ShopifyConnector:
                       for m in snapshot.get("media", [])]
             out = self._update_images(snapshot["product_id"], images)
             out["restored"] = "images"
+            return out
+        if action_type.name == "shopify.set_price":
+            # Each variant may have had a different price before the change,
+            # so restore sets them back individually rather than to one value.
+            out = self._update_variant_prices(
+                snapshot["product_id"],
+                [{"id": v["id"], "price": v["price"]} for v in snapshot.get("variants", [])])
+            out["restored"] = "price"
             return out
         raise ShopifyError(0, f"unhandled restore for {action_type.name!r}")
 
@@ -253,3 +272,33 @@ class ShopifyConnector:
             self._check_user_errors(data, "productReorderMedia")
         return {"product_id": str(product_id),
                 "alt_updated": len(alt_updates), "reordered": len(moves)}
+
+    def _update_price(self, product_id, variant_ids: list, new_price) -> dict:
+        """Set every given variant to the same new price (the registry's
+        shopify.set_price takes one product-wide price, mirroring
+        printful.set_retail_price)."""
+        price = f"{float(new_price):.2f}"
+        variants = [{"id": vid, "price": price} for vid in variant_ids]
+        out = self._update_variant_prices(product_id, variants)
+        out["new_price"] = price
+        return out
+
+    def _update_variant_prices(self, product_id, variants: list[dict]) -> dict:
+        """`variants` is [{"id": <variant gid>, "price": <str>}, ...] — each
+        may carry its own price, so restore() can put back whatever a
+        variant's price was before, not one uniform value."""
+        if not variants:
+            return {"product_id": str(product_id), "variants_priced": 0}
+        mutation = """
+            mutation($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+                productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                    productVariants { id price }
+                    userErrors { field message }
+                }
+            }"""
+        data = self._gql(mutation, {
+            "productId": _gid("Product", product_id),
+            "variants": [{"id": v["id"], "price": v["price"]} for v in variants],
+        })
+        self._check_user_errors(data, "productVariantsBulkUpdate")
+        return {"product_id": str(product_id), "variants_priced": len(variants)}

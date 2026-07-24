@@ -5,8 +5,28 @@ import pytest
 from brain.models import EscalationItem
 
 
-def make_item(escalation_id="", urgency="normal", raised_by="market_intel", summary="test"):
-    return EscalationItem(id=escalation_id, raised=date(2026, 7, 15), raised_by=raised_by, urgency=urgency, summary=summary)
+def make_item(escalation_id="", urgency="normal", raised_by="market_intel", summary="test", action_ref=None):
+    return EscalationItem(id=escalation_id, raised=date(2026, 7, 15), raised_by=raised_by, urgency=urgency,
+                          summary=summary, action_ref=action_ref)
+
+
+def test_action_ref_round_trips_through_queue(hq):
+    eid = hq.append_escalation(make_item(action_ref="ACT-2026-W29-0007"))
+    match = next(item for item in hq.read_escalation_queue() if item.id == eid)
+    assert match.action_ref == "ACT-2026-W29-0007"
+
+
+def test_action_ref_absent_when_not_set(hq):
+    eid = hq.append_escalation(make_item())
+    match = next(item for item in hq.read_escalation_queue() if item.id == eid)
+    assert match.action_ref is None
+
+
+def test_action_ref_carries_through_to_resolved(hq):
+    eid = hq.append_escalation(make_item(action_ref="ACT-2026-W29-0007"))
+    hq.resolve_escalation(eid, resolution="approved — executed", decided_by="CEO")
+    resolved = next(item for item in hq.read_resolved_escalations() if item.id == eid)
+    assert resolved.action_ref == "ACT-2026-W29-0007"
 
 
 def test_append_escalation_assigns_sequential_ids(hq):

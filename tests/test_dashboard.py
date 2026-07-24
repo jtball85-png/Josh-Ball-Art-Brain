@@ -7,8 +7,12 @@ from datetime import date
 import pytest
 from fastapi.testclient import TestClient
 
+from brain.actions.limits import AgentLimits
+from brain.actions.models import ActionIntent, ActionType
 from brain.dashboard.app import create_app
-from brain.models import DecisionEntry, EscalationItem
+from brain.executor import Executor
+from brain.models import DecisionEntry, DepartmentConfig, EscalationItem
+from tests.fake_connector import FakeConnector
 
 
 @pytest.fixture
@@ -134,6 +138,110 @@ class TestOverview:
 
     def test_agenda_absent_is_null(self, client):
         assert client.get("/api/overview").json()["this_week_agenda"] is None
+
+    def test_escalation_without_action_ref_has_no_pending_action(self, client):
+        esc = client.get("/api/overview").json()["escalations"][0]
+        assert esc["action_ref"] is None
+        assert esc["pending_action"] is None
+
+
+class TestEscalationApproval:
+    """CEO approval closes the loop end to end: the console executes the
+    pending change instead of leaving it for the CEO to apply by hand."""
+
+    FAKE_REGISTRY = {
+        "fake.set_price": ActionType(
+            name="fake.set_price", connector="fake",
+            params={"product_id": "str", "new_price": "float"},
+            snapshot_params=("product_id",),
+        ),
+    }
+
+    def _setup(self, config, hq, tmp_hq_root, connector=None):
+        (tmp_hq_root / "charter" / "company.md").write_text("# Charter", encoding="utf-8")
+        config.departments["storefront"] = DepartmentConfig(
+            name="storefront", tier=1, status="active", report_cadence="weekly")
+        limits = {"storefront": AgentLimits(allowed_actions=[])}
+        executor = Executor(
+            hq=hq, registry=self.FAKE_REGISTRY, limits=limits, capabilities={},
+            connectors={"fake": connector} if connector else {}, env={},
+        )
+        client = TestClient(create_app(config, hq, executor))
+        return client, executor
+
+    def _propose_and_reject(self, executor):
+        return executor.submit(ActionIntent(
+            agent="storefront", action_type="fake.set_price",
+            params={"product_id": "P1", "new_price": 24.99}, rationale="margin fix"))
+
+    def test_approve_executes_and_resolves(self, config, hq, tmp_hq_root):
+        connector = FakeConnector()
+        client, executor = self._setup(config, hq, tmp_hq_root, connector)
+        rejected = self._propose_and_reject(executor)
+        esc = hq.read_escalation_queue()[0]
+        assert esc.action_ref == rejected.id
+
+        overview_before = client.get("/api/overview").json()
+        assert overview_before["escalations"][0]["pending_action"]["action_type"] == "fake.set_price"
+
+        r = client.post(f"/api/escalations/{esc.id}/approve")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["ok"] is True
+        assert data["action"]["result"] == "executed"
+        assert connector.calls[-1][0] == "execute"
+
+        assert hq.read_escalation_queue() == []
+        resolved = hq.read_resolved_escalations()[0]
+        assert "executed" in resolved.resolution
+
+    def test_approve_execution_failure_still_resolves_with_reason(self, config, hq, tmp_hq_root):
+        connector = FakeConnector()
+        connector.raise_on_execute = True
+        client, executor = self._setup(config, hq, tmp_hq_root, connector)
+        rejected = self._propose_and_reject(executor)
+        esc = hq.read_escalation_queue()[0]
+
+        r = client.post(f"/api/escalations/{esc.id}/approve")
+        data = r.json()
+        assert data["ok"] is False
+        assert data["action"]["result"] == "failed"
+        resolved = hq.read_resolved_escalations()[0]
+        assert "execution failed" in resolved.resolution
+
+    def test_approve_without_executor_configured_503s(self, config, hq, tmp_hq_root):
+        (tmp_hq_root / "charter" / "company.md").write_text("# Charter", encoding="utf-8")
+        client = TestClient(create_app(config, hq))  # no executor
+        assert client.post("/api/escalations/ESC-001/approve").status_code == 503
+
+    def test_approve_unknown_escalation_404s(self, config, hq, tmp_hq_root):
+        client, _ = self._setup(config, hq, tmp_hq_root)
+        assert client.post("/api/escalations/ESC-999/approve").status_code == 404
+
+    def test_approve_escalation_without_action_ref_400s(self, config, hq, tmp_hq_root):
+        client, _ = self._setup(config, hq, tmp_hq_root)
+        eid = hq.append_escalation(EscalationItem(
+            id="", raised=date(2026, 7, 16), raised_by="market_intel",
+            urgency="normal", summary="not an action"))
+        assert client.post(f"/api/escalations/{eid}/approve").status_code == 400
+
+    def test_deny_resolves_without_touching_the_connector(self, config, hq, tmp_hq_root):
+        connector = FakeConnector()
+        client, executor = self._setup(config, hq, tmp_hq_root, connector)
+        rejected = self._propose_and_reject(executor)
+        esc = hq.read_escalation_queue()[0]
+
+        r = client.post(f"/api/escalations/{esc.id}/deny", json={"note": "not yet"})
+        assert r.status_code == 200
+        assert connector.calls == []
+        assert hq.read_escalation_queue() == []
+        resolved = hq.read_resolved_escalations()[0]
+        assert "denied" in resolved.resolution
+        assert "not yet" in resolved.resolution
+
+    def test_deny_unknown_escalation_404s(self, config, hq, tmp_hq_root):
+        client, _ = self._setup(config, hq, tmp_hq_root)
+        assert client.post("/api/escalations/ESC-999/deny", json={"note": ""}).status_code == 404
 
 
 class TestDepartments:

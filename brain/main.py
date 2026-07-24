@@ -311,7 +311,8 @@ def cmd_dashboard(hq: HQ, config: BrainConfig, host: str, port: int) -> None:
         print("Dashboard dependencies missing — run: .venv/Scripts/pip install -e \".[dev]\"")
         return
 
-    app = create_app(config, hq)
+    executor = build_executor(hq, build_connectors())
+    app = create_app(config, hq, executor)
 
     # Chat surfaces need the model; the read-only view must work without it —
     # but a chat failure must be LOUD: full traceback to the console AND to

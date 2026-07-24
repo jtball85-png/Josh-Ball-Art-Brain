@@ -92,6 +92,9 @@ pre.doc{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
 }
 .decis{color:var(--green);font-size:12px;margin:4px 0}
 .urgent-banner{color:var(--coral);font-size:11px;margin-bottom:6px}
+.esc-item{padding:7px 0;border-bottom:1px solid var(--line)}
+.esc-item:last-child{border-bottom:none}
+.esc-item .prev{font-size:11px;color:var(--dim);margin:3px 0 0}
 @media(max-width:480px){.grid{grid-template-columns:repeat(2,1fr)}}
 .prod{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
 .prod:first-of-type{border-top:none}

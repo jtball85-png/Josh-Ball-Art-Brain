@@ -172,6 +172,53 @@ class TestUpdateListingImages:
         ]
 
 
+class TestSetPrice:
+    def test_execute_fetches_variants_then_sets_price(self):
+        t = FakeTransport()
+        t.push(200, {"data": {"product": make_product_node()}})  # get_product for variant ids
+        t.push(200, {"data": {"productVariantsBulkUpdate": {
+            "productVariants": [{"id": "gid://shopify/ProductVariant/9101", "price": "24.99"}],
+            "userErrors": []}}})
+        out = connected(t).execute(
+            REGISTRY["shopify.set_price"], {"product_id": "7001", "new_price": 24.99})
+        sent = t.calls[1]["body"]["variables"]
+        assert sent["productId"] == "gid://shopify/Product/7001"
+        assert sent["variants"] == [{"id": "gid://shopify/ProductVariant/9101", "price": "24.99"}]
+        assert out["variants_priced"] == 1
+        assert out["new_price"] == "24.99"
+
+    def test_user_errors_raise(self):
+        t = FakeTransport()
+        t.push(200, {"data": {"product": make_product_node()}})
+        t.push(200, {"data": {"productVariantsBulkUpdate": {
+            "productVariants": None,
+            "userErrors": [{"field": ["price"], "message": "invalid price"}]}}})
+        with pytest.raises(ShopifyError, match="invalid price"):
+            connected(t).execute(REGISTRY["shopify.set_price"],
+                                 {"product_id": "7001", "new_price": -1.0})
+
+    def test_snapshot_captures_current_variant_prices(self):
+        t = FakeTransport()
+        t.push(200, {"data": {"product": make_product_node()}})
+        snap = connected(t).read_state(REGISTRY["shopify.set_price"], {"product_id": "7001"})
+        assert snap["variants"] == [{"id": "gid://shopify/ProductVariant/9101", "price": "19.00"}]
+
+    def test_restore_reapplies_snapshotted_prices_per_variant(self):
+        # Each variant may have had a different price before the change, so
+        # restore must send each variant's OWN snapshotted price back, not
+        # one uniform value.
+        t = FakeTransport()
+        snapshot = {"product_id": "7001",
+                    "variants": [{"id": "gid://shopify/ProductVariant/9101", "price": "19.00"}]}
+        t.push(200, {"data": {"productVariantsBulkUpdate": {
+            "productVariants": [{"id": "gid://shopify/ProductVariant/9101", "price": "19.00"}],
+            "userErrors": []}}})
+        out = connected(t).restore(REGISTRY["shopify.set_price"], snapshot)
+        sent = t.calls[0]["body"]["variables"]["variants"]
+        assert sent == [{"id": "gid://shopify/ProductVariant/9101", "price": "19.00"}]
+        assert out["restored"] == "price"
+
+
 class TestProductView:
     def test_normalizes_node_to_unified_view(self):
         view = product_view_from_shopify(make_product_node(),

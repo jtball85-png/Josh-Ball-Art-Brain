@@ -179,9 +179,23 @@ async function loadOverview() {
   $("escalations").innerHTML = data.escalations.length
     ? (data.escalations.some((e) => e.urgency === "urgent")
         ? `<div class="urgent-banner">▲ urgent items below — no push alerts exist; this surfaced because you opened the console</div>` : "")
-      + data.escalations.map((e) =>
-        `<div class="row"><span class="${e.urgency === "urgent" ? "urgent" : ""}">${e.urgency === "urgent" ? "▲" : "◦"} ${esc(e.id)} · ${esc(e.summary)}</span><span class="t">${esc(e.raised)}</span></div>`).join("")
+      + data.escalations.map((e) => `
+        <div class="esc-item">
+          <div class="row" style="border-bottom:none;padding-bottom:2px">
+            <span class="${e.urgency === "urgent" ? "urgent" : ""}">${e.urgency === "urgent" ? "▲" : "◦"} ${esc(e.id)} · ${esc(e.summary)}</span>
+            <span class="t">${esc(e.raised)}</span>
+          </div>
+          ${e.pending_action ? `<div class="prev">Pending: ${esc(actionPreview(e.pending_action))}</div>` : ""}
+          ${e.action_ref ? `
+            <div class="chiprow" style="margin:4px 0 0">
+              <button class="primary" data-esc-approve="${esc(e.id)}">Approve — do it</button>
+              <button data-esc-deny="${esc(e.id)}">Deny</button>
+            </div>` : ""}
+        </div>`).join("")
     : `<div class="dim">queue is empty</div>`;
+
+  document.querySelectorAll("[data-esc-approve]").forEach((b) => (b.onclick = () => approveEscalation(b.dataset.escApprove, b)));
+  document.querySelectorAll("[data-esc-deny]").forEach((b) => (b.onclick = () => denyEscalation(b.dataset.escDeny, b)));
 
   $("decisions").innerHTML = data.recent_decisions.length
     ? data.recent_decisions.map((d) =>
@@ -196,6 +210,46 @@ async function loadOverview() {
   // dashboard, so both update after every ingest/meeting/agent action too.
   loadAttention();
   loadCosts();
+}
+
+/* ---------- escalations: approve executes for real, no manual re-apply --- */
+function actionPreview(a) {
+  const params = Object.entries(a.params || {})
+    .map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(", ");
+  return `${a.agent} wants to run ${a.action_type} (${params})`;
+}
+
+async function approveEscalation(id, btn) {
+  btn.disabled = true;
+  const busy = workBusy(`Approving ${id} — executing…`);
+  try {
+    const r = await fetch(`/api/escalations/${encodeURIComponent(id)}/approve`, { method: "POST" });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
+    busy.done(data.ok
+      ? `✓ ${id} approved — executed as ${data.action.id}, no further action needed`
+      : `✗ ${id} approved but execution failed: ${(data.action.reasons || []).join("; ")}`);
+  } catch (e) {
+    busy.done(`✗ ${id} — could not execute: ${e.message}`);
+  }
+  loadOverview();
+}
+
+async function denyEscalation(id, btn) {
+  btn.disabled = true;
+  const busy = workBusy(`Denying ${id}…`);
+  try {
+    const r = await fetch(`/api/escalations/${encodeURIComponent(id)}/deny`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: "" }),
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || `HTTP ${r.status}`);
+    busy.done(`✓ ${id} denied`);
+  } catch (e) {
+    busy.done(`✗ ${id} — could not deny: ${e.message}`);
+  }
+  loadOverview();
 }
 
 /* ---------- departments ---------- */

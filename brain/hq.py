@@ -73,6 +73,7 @@ def _escalation_from_block(escalation_id: str, block: str) -> EscalationItem:
         resolved=date.fromisoformat(fields["resolved"]) if "resolved" in fields else None,
         resolution=fields.get("resolution"),
         decided_by=fields.get("decided_by"),
+        action_ref=fields.get("action_ref"),
     )
 
 
@@ -347,6 +348,8 @@ class HQ:
             f"- Urgency: {item.urgency}\n"
             f"- Summary: {item.summary}\n"
         )
+        if item.action_ref:
+            block += f"- Action ref: {item.action_ref}\n"
         if not path.exists():
             path.write_text("# Escalation Queue\n\n", encoding="utf-8")
         with open(path, "a", encoding="utf-8") as f:
@@ -388,6 +391,10 @@ class HQ:
             f"- Raised by: {item.raised_by}\n"
             f"- Urgency: {item.urgency}\n"
             f"- Summary: {item.summary}\n"
+        )
+        if item.action_ref:
+            resolved_block += f"- Action ref: {item.action_ref}\n"
+        resolved_block += (
             f"- Resolved: {item.resolved.isoformat()}\n"
             f"- Resolution: {item.resolution}\n"
             f"- Decided by: {item.decided_by}\n"
