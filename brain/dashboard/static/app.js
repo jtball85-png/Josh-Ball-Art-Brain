@@ -440,6 +440,23 @@ function brSys(text) {
   s.textContent = text;
   $("brLog").appendChild(s);
 }
+function brBusy(text) {
+  // Boardroom twin of workBusy: bold + spinner while the action is in
+  // flight; .done() settles it into an ordinary sysline.
+  const s = document.createElement("div");
+  s.className = "sysline busy";
+  s.innerHTML = `<span class="spin"></span><span class="t"></span>`;
+  s.querySelector(".t").textContent = text;
+  $("brLog").appendChild(s);
+  return {
+    done(finalText) {
+      const spin = s.querySelector(".spin");
+      if (spin) spin.remove();
+      s.classList.remove("busy");
+      if (finalText !== undefined) s.querySelector(".t").textContent = finalText;
+    },
+  };
+}
 function brSetInput(placeholder, buttonLabel) {
   $("brInput").placeholder = placeholder;
   $("brSend").textContent = buttonLabel;
@@ -513,15 +530,22 @@ async function brOpen(topic, exhibitDept) {
   $("brLog").innerHTML = "";
   $("brChips").innerHTML = "";
   brDeptColors = {};
-  brSys(`brain boardroom "${topic}"` +
+  const busy = brBusy(`brain boardroom "${topic}"` +
         (exhibitDept ? ` — sharing ${exhibitDept}'s latest report with the board` : "") +
         " — convening…");
-  const response = await fetch("/api/boardroom/open", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic, exhibit_department: exhibitDept || null }),
-  });
+  let response;
+  try {
+    response = await fetch("/api/boardroom/open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic, exhibit_department: exhibitDept || null }),
+    });
+  } catch (err) {
+    busy.done();
+    throw err;
+  }
   if (!response.ok) {
+    busy.done();
     const detail = (await response.json()).detail || `HTTP ${response.status}`;
     if (response.status === 409) { brShowAbandonOption(detail); return; }
     throw new Error(detail);
@@ -529,6 +553,7 @@ async function brOpen(topic, exhibitDept) {
   brPhase = "debating";
   let round = "";
   await readSSE(response, (e) => {
+    busy.done();  // first event = the convene is no longer "in flight"
     if (e.participants) {
       e.participants.forEach((p, i) => (brDeptColors[p.department] = DEPT_COLORS[i % DEPT_COLORS.length]));
       brSys("convened: " + e.participants.map((p) => p.department + (p.advisory ? " (advisory)" : "")).join(", "));
@@ -682,6 +707,27 @@ function workSys(text) {
   work.log.appendChild(s);
   s.scrollIntoView({ behavior: "smooth", block: "end" });
 }
+function workBusy(text) {
+  // A sysline for an action IN FLIGHT: bold + spinner until .done() is
+  // called, then it settles into an ordinary quiet sysline (the record of
+  // what ran). Always call .done() in a finally — a stuck spinner is worse
+  // than no spinner.
+  workShow();
+  const s = document.createElement("div");
+  s.className = "sysline busy";
+  s.innerHTML = `<span class="spin"></span><span class="t"></span>`;
+  s.querySelector(".t").textContent = text;
+  work.log.appendChild(s);
+  s.scrollIntoView({ behavior: "smooth", block: "end" });
+  return {
+    done(finalText) {
+      const spin = s.querySelector(".spin");
+      if (spin) spin.remove();
+      s.classList.remove("busy");
+      if (finalText !== undefined) s.querySelector(".t").textContent = finalText;
+    },
+  };
+}
 function workMsg(speaker, text) {
   workShow();
   const isCeo = speaker === "CEO";
@@ -761,7 +807,15 @@ async function postSSE(url, body, onEvent) {
 /* ---------- command implementations ---------- */
 
 async function cmdIngest() {
-  workSys("#ingest — reading reports, synthesizing the agenda (a minute or two)…");
+  const busy = workBusy("#ingest — reading reports, synthesizing the agenda (a minute or two)…");
+  try {
+    await ingestInner();
+  } finally {
+    busy.done();
+  }
+}
+
+async function ingestInner() {
   await postSSE("/api/command/ingest", {}, (e) => {
     if (e.line) workSys(e.line);
     if (e.done) {
@@ -797,20 +851,24 @@ async function cmdAgent(dept) {
 async function cmdCollab(deptsRaw, task) {
   const departments = deptsRaw.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
   workMsg("CEO", `#collab ${departments.join(", ")} — ${task}`);
-  workSys("convening the departments on a joint deliverable…");
+  const busy = workBusy("convening the departments on a joint deliverable…");
   let synthTx = null;
-  await postSSE("/api/collaborate", { departments, task }, (e) => {
-    if (e.line) workSys(e.line);
-    if (e.department) workMsg(e.department, e.text);
-    if (e.delta) {
-      if (!synthTx) synthTx = workMsg("brain", "");
-      synthTx.textContent += e.delta;
-    }
-    if (e.done) {
-      workOk(`✓ joint deliverable saved to HQ: ${e.path}`);
-      loadDepartments();
-    }
-  });
+  try {
+    await postSSE("/api/collaborate", { departments, task }, (e) => {
+      if (e.line) workSys(e.line);
+      if (e.department) workMsg(e.department, e.text);
+      if (e.delta) {
+        if (!synthTx) synthTx = workMsg("brain", "");
+        synthTx.textContent += e.delta;
+      }
+      if (e.done) {
+        workOk(`✓ joint deliverable saved to HQ: ${e.path}`);
+        loadDepartments();
+      }
+    });
+  } finally {
+    busy.done();
+  }
 }
 
 async function cmdConsult(dept, message) {
@@ -848,11 +906,16 @@ async function cmdAsk(question) {
 
 async function cmdDirective(dept, changes) {
   workMsg("CEO", `#directive ${dept} — ${changes}`);
-  workSys("drafting the revised directive…");
-  const response = await fetch("/api/command/directive", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ department: dept, changes }),
-  });
+  const busy = workBusy("drafting the revised directive…");
+  let response;
+  try {
+    response = await fetch("/api/command/directive", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ department: dept, changes }),
+    });
+  } finally {
+    busy.done();
+  }
   if (!response.ok) {
     workSys(`error: ${(await response.json()).detail || response.status}`);
     return;
@@ -967,13 +1030,18 @@ async function meetingDiscuss(text) {
 }
 
 async function meetingClose(ratifications) {
-  workSys("meeting over — writing minutes, decisions, and directive updates…");
+  const busy = workBusy("meeting over — writing minutes, decisions, and directive updates…");
   workChipSet("", []);
-  const response = await fetch("/api/meeting/close", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ratifications }),
-  });
-  const data = await response.json();
+  let data;
+  try {
+    const response = await fetch("/api/meeting/close", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ratifications }),
+    });
+    data = await response.json();
+  } finally {
+    busy.done();
+  }
 
   if (data.needs_ratification) {
     const pending = data.needs_ratification[0];
