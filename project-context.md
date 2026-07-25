@@ -1,5 +1,5 @@
 # Project: Minivan Dads — The Brain (COO)
-Last updated: 2026-07-24 by Claude Code
+Last updated: 2026-07-25 by Claude Code
 
 ## What this project is
 Minivan Dads Inc. is a print-on-demand apparel brand (Printful catalog, "Old Guys Rule" playbook) targeting minivan-driving dads, aiming for $200k+/yr net income or a seven-figure exit. This project is "The Brain" — Phase 1 of a multi-agent company system: a CLI orchestrator (COO) plus HQ, a git-diffable Markdown filesystem that is the company's single source of truth. Future department agents (Market Intel, Creative, Content, Product, Storefront, Customer, Paid Ads, Finance) will read directives from and write reports to HQ in later phases — not built yet, but the Phase 1 design must not box them out.
@@ -46,11 +46,13 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: a173a63 — Board can propose product/pricing changes; CEO approval executes them
-In progress: uncommitted — garage/prints/masters/Test.jpg, garage/prints/proofs/Test-proof.jpg, garage/prints/ready/Test/; garage/prints/masters/sample-photo.jpg shows as deleted but uncommitted
+Last commit: 7e90e8f — Add Bitwarden-based sync for cross-machine API keys
+In progress: none
 Branch: main
 
 ## What's next
+- [ ] CEO can't reach the desktop computer for a few days — once there: `bw login` + unlock, run `garage/secrets/push_env_to_vault.py` to seed the vault with the real Shopify/Printful secrets (this laptop only pushed a smoke-test `ANTHROPIC_API_KEY`-only version); then back on the laptop, `pull_env_from_vault.py`, then approve ESC-016 (Enamel Cup $14.00→$19.50, ACT-2026-W30-0014) from the dashboard to actually execute it live
+- [ ] Mug pricing (Bodysurf Fin Mug, Logo Mug) still unresolved — `shopify.set_price` can only set one flat price per product, which would collapse their existing 11/15/20oz price ladder; needs either a per-variant pricing capability or a CEO decision to accept the flattening
 - [ ] CEO-stated 2026-07-23: revisit the board cycle plan next session — the W30 agenda (4 [CEO REQUIRED] decisions) is built but no meeting held; then the brand-redefinition #boardroom, which gates the prints/drinkware naming/description/SEO/pricing pass
 - [ ] CEO review owed: tumbler listing-copy dry-run (ACT-2026-W30-0009), 4 storefront title dry-runs (ACT-2026-W30-0010..0013), and the margin recommendations in `garage/store-review-2026-07-23.md` (tumbler 9%, enamel cup 11% vs the 30% floor)
 - [ ] CEO-owned: open the Etsy shop (step zero — see `docs/design-to-store-pipeline.md`) and connect it to Printful, so the storefront agent's drafted listing copy + the ready-not-wired Etsy connector can go live
@@ -105,6 +107,7 @@ Browser tasks, desktop automation, file management.
 Use project-context-updater.html on Cowork-heavy days.
 
 ## Change log
+- 2026-07-25 — Pulled and merged the desktop's Josh Ball Art pivot session (real Printful/Shopify connectors, product catalog, approve-and-execute pricing); updated `origin` remote to the renamed GitHub repo; hardened `/start-of-day` (pulls first) and `/end-of-day` (pushes after commit) so git sync is enforced, not manual (d1f3903); proposed a real live-test price action for the Enamel Cup, correctly rejected-and-escalated as ACT-2026-W30-0014/ESC-016 (8a9c619); built and verified a Bitwarden-vault-based `.env` sync (`garage/secrets/`) to fix the cross-machine secrets gap that blocked approving it (7e90e8f) — Source: Claude Code
 - 2026-07-24 — Board can propose product/pricing changes including price; CEO approval now executes the change for real instead of requiring a manual re-apply — `Executor.approve_action()` (allowlist-only bypass, hard denials/bad params/suspended agents still block it), `EscalationItem.action_ref`, `shopify.set_price` implemented for real (was registered but deliberately unimplemented), dashboard `/api/escalations/{id}/approve|deny` + console UI, charter + storefront directive text updated (a173a63) — Source: Claude Code
 - 2026-07-23 — Managed design-to-POD asset system built (real Bodysurf Fin SVG master curated, drive manifest + junk cleanup, spec-driven push driver, dry-run rehearsed) (ec0369b, ef81b39); JBA Printful token wired — 7 live products + 11 saved templates read, manifest corrected (beanie/poster/can-cooler) (4d8268c, 87d00db); live-store margin audit vs 30% floor — 97/189 variants below, recs escalated (739894e); Shopify Admin API token captured via local OAuth exchange, GraphQL connector built with governed copy/image actions, full 107-product store synced, first dry-run listing edit logged (b5d8de0); silent empty-output bug found and fixed (LLMTruncated + caps raised + regression tests) and the W30 board cycle run — agenda with 4 [CEO REQUIRED] decisions awaiting the meeting (7482c89) — Source: Claude Code
 - 2026-07-21 — Garage-design recreation attempt of Josh Ball Art's existing "Bodysurf Fin" design (from a reference photo, no source file) tested and rejected by the CEO as a poor visual match; draft files deleted, nothing created or published. Live store check confirmed the design's 7 real color combos for future reference. Confirmed no Shopify connector/MCP exists yet — building one needs a CEO-created Admin API token first — Source: Claude Code

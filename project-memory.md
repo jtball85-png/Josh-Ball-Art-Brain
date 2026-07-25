@@ -23,6 +23,76 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
+## Session — 2026-07-25
+
+**Focus:** CEO reported a big overhaul done on the other (desktop) computer and
+asked how to keep both computers aligned; then, after syncing, asked to test
+the new approve-and-execute pricing feature on "the cups"; that surfaced a
+deeper cross-machine secrets gap, which the session then solved with a
+Bitwarden-based vault.
+
+**Decisions made:**
+- Hardened `/start-of-day` (pulls before reading context, stops first if the
+  local tree is dirty) and `/end-of-day` (pushes after committing) — both
+  commands previously never touched the remote at all despite being the
+  intended sync ritual.
+- Chose a Bitwarden vault over an in-repo encrypted secrets file (sops/age)
+  for syncing `.env` across the two computers — a vendor account has real
+  recovery options; a single local encryption key does not, and losing it
+  would mean losing every secret with no way back.
+- CEO directed a real live test of the approve-and-execute pricing path
+  (built 2026-07-24, never yet exercised against the real store): Enamel
+  Cup $14.00 → $19.50 (the more rigorously-sourced of two documented
+  recommendations). Mugs were explicitly deferred — the current
+  `shopify.set_price` action sets one flat price for every variant, which
+  would collapse their existing 11/15/20oz price ladder.
+
+**Problems solved:**
+- Confirmed the GitHub repo itself was renamed on the other computer
+  (`Minivan-Dads` → `Josh-Ball-Art-Brain`, part of the Josh Ball Art pivot);
+  updated this computer's `origin` remote to match.
+- Pulled and merged the other computer's large 2026-07-24 session (real
+  Printful/Shopify connectors, product catalog, approve-and-execute pricing)
+  with no conflicts.
+- Proposed the Enamel Cup price action through the real executor
+  (ACT-2026-W30-0014 / ESC-016) — correctly rejected-and-escalated since
+  price actions are never in an agent's allowed_actions; committed and
+  pushed so it's visible from either computer.
+- Diagnosed a chain of Bitwarden CLI setup failures in turn: a stray
+  `your-` left in a pasted email, a multi-line terminal paste feeding
+  garbage into the interactive master-password prompt, a wrong guessed
+  full path to `bw.exe`, and finally a missing `cd` into the project folder
+  before running the Python script — each was the actual cause of a
+  different "invalid password" / "path not found" error, not a Bitwarden
+  problem.
+- Built and verified `garage/secrets/push_env_to_vault.py` and
+  `pull_env_from_vault.py` end-to-end (create, then round-trip pull with no
+  diff) against a real Bitwarden vault.
+
+**Left unresolved:**
+- The real Shopify/Printful credentials still only exist in the desktop's
+  `.env` — CEO can't reach that computer for a few days. Next time there:
+  `bw login` + unlock, then `push_env_to_vault.py` to seed the vault with
+  the real secrets (this laptop's push only seeded `ANTHROPIC_API_KEY`,
+  a smoke test). Then back on this laptop, `pull_env_from_vault.py`, then
+  approve ESC-016 from the dashboard to actually execute the Enamel Cup
+  price change live.
+- Mug pricing (Bodysurf Fin Mug, Logo Mug) still needs either a per-variant
+  pricing capability or a CEO call to accept a flat price that collapses
+  the size ladder — not decided.
+
+**Files changed this session:**
+```
+ garage/secrets/README.md              | 69 +++++++++++++++++++++++++++++
+ garage/secrets/pull_env_from_vault.py | 73 ++++++++++++++++++++++++++++++
+ garage/secrets/push_env_to_vault.py   | 83 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 225 insertions(+)
+```
+(plus, earlier in the session: `.claude/commands/start-of-day.md` and
+`end-of-day.md` hardened; `hq/actions/log.jsonl` and
+`hq/escalations/queue.md` updated with the ACT-2026-W30-0014/ESC-016
+proposal — see commits d1f3903, 8a9c619 in today's `git log`.)
+
 ## Session — 2026-07-24
 
 **Focus:** CEO reported having completed items from a prior memory list (API-key
