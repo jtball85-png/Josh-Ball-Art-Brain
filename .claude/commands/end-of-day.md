@@ -109,17 +109,25 @@ Before committing, verify:
 
 ---
 
-## 5. Commit both files
+## 5. Commit and push
 
 ```bash
 git add project-context.md project-memory.md
 git commit -m "End of day [YYYY-MM-DD] — context and memory updated"
+git push
 ```
+
+If `git push` fails (e.g. the remote has commits this machine doesn't have,
+or there's no network), STOP and tell the user explicitly — do not treat
+the commit alone as done. An unpushed commit can't reach the other
+computer.
 
 Verify clean state:
 ```bash
 git status
 ```
+Confirm it reports the branch is up to date with the remote (not just
+"nothing to commit").
 
 ---
 
@@ -127,6 +135,6 @@ git status
 
 Tell the user:
 
-"Session captured. Both files committed.
+"Session captured. Both files committed and pushed.
 
 Tomorrow: type /start-of-day to pick up where we left off."

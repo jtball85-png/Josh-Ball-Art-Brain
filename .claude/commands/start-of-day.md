@@ -11,6 +11,33 @@ Do NOT begin working until all steps are complete.
 
 ---
 
+## 0. Sync with the remote
+
+This machine may not have the latest commits pushed from the other
+computer. Before reading anything, sync:
+
+```bash
+git status --porcelain
+```
+
+If this outputs anything (uncommitted changes on this machine), STOP.
+Tell the user there's uncommitted work on this computer and ask how they
+want to proceed — do NOT pull over local changes.
+
+If the tree is clean, pull:
+
+```bash
+git pull
+```
+
+If the pull fails (merge conflict, diverged branches, no network), STOP
+and show the user the exact git output. Do not continue to step 1 on
+possibly-stale files until it's resolved.
+
+If the pull succeeds (including "Already up to date"), continue to step 1.
+
+---
+
 ## 1. Read both context files
 
 Read the following files from the project root:
