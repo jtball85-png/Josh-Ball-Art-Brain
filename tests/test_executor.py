@@ -387,6 +387,87 @@ class TestRollback:
             ex.rollback(record.id)
 
 
+class TestApproveAction:
+    """CEO-approval override: the only path that lets a not-in-allowlist
+    action (e.g. a price change) execute for real. Every rejection reason
+    OTHER than the allowlist must still block approval."""
+
+    def _rejected(self, hq, limits, action="fake.set_value", params=None):
+        ex = make_executor(hq, limits)
+        record = ex.submit(intent(action=action, params=params))
+        assert record.result == "rejected"
+        return ex, record
+
+    def test_approve_not_in_allowlist_action_executes_live(self, hq, agent_config, tmp_path):
+        lim = {"storefront": AgentLimits(allowed_actions=[])}
+        connector = FakeConnector()
+        ex = make_executor(hq, lim, connector=connector, tmp_path=tmp_path)
+        rejected = ex.submit(intent())
+        assert rejected.result == "rejected"
+        assert "allowed_actions" in rejected.reasons[0]
+
+        escalations = hq.read_escalation_queue()
+        assert len(escalations) == 1
+        assert escalations[0].action_ref == rejected.id
+
+        approved = ex.approve_action(rejected.id, escalation_id=escalations[0].id)
+        assert approved.result == "executed"
+        assert approved.id != rejected.id  # a fresh action id, not a mutation of the rejection
+        assert approved.mode == "supervised"
+        assert any("CEO-approved override" in r for r in approved.reasons)
+        assert [c[0] for c in connector.calls] == ["read_state", "execute"]
+
+    def test_approve_hard_denied_action_still_refused(self, hq, agent_config, tmp_path):
+        permissive = {"storefront": AgentLimits(allowed_actions=["fake.touch_payment_settings"])}
+        connector = FakeConnector()
+        ex = make_executor(hq, permissive, connector=connector, tmp_path=tmp_path)
+        rejected = ex.submit(intent(action="fake.touch_payment_settings", params={}))
+        assert rejected.result == "rejected"
+        assert "globally denied" in rejected.reasons[0]
+
+        with pytest.raises(ValueError, match="globally denied"):
+            ex.approve_action(rejected.id)
+        assert connector.calls == []
+
+    def test_approve_malformed_params_still_refused(self, hq, agent_config, limits):
+        ex, rejected = self._rejected(hq, limits, params={"target_id": "P1"})  # missing new_value
+        assert "missing params" in rejected.reasons[0]
+        with pytest.raises(ValueError, match="missing params"):
+            ex.approve_action(rejected.id)
+
+    def test_approve_suspended_agent_still_refused(self, hq, agent_config, tmp_path):
+        lim = {"storefront": AgentLimits(allowed_actions=[])}
+        connector = FakeConnector()
+        ex = make_executor(hq, lim, connector=connector, tmp_path=tmp_path)
+        rejected = ex.submit(intent())
+        agent_config.departments["storefront"].status = "suspended"
+        with pytest.raises(ValueError, match="suspended"):
+            ex.approve_action(rejected.id)
+
+    def test_approve_unknown_action_id_raises(self, hq, agent_config, limits):
+        with pytest.raises(ValueError, match="No action"):
+            make_executor(hq, limits).approve_action("ACT-2026-W29-9999")
+
+    def test_approve_non_rejected_action_raises(self, hq, agent_config, limits, tmp_path):
+        connector = FakeConnector()
+        caps = {"storefront": {"fake.set_value": ActionMode.AUTO}}
+        ex = make_executor(hq, limits, capabilities=caps, connector=connector, tmp_path=tmp_path)
+        executed = ex.submit(intent())
+        assert executed.result == "executed"
+        with pytest.raises(ValueError, match="not rejected"):
+            ex.approve_action(executed.id)
+
+    def test_approve_bounds_skipped_daily_cap_would_have_blocked(self, hq, agent_config, tmp_path):
+        # A CEO's explicit sign-off isn't throttled by the caps that
+        # constrain an agent's own autonomous proposals.
+        lim = {"storefront": AgentLimits(allowed_actions=[], daily_action_cap=0)}
+        connector = FakeConnector()
+        ex = make_executor(hq, lim, connector=connector, tmp_path=tmp_path)
+        rejected = ex.submit(intent())
+        approved = ex.approve_action(rejected.id)
+        assert approved.result == "executed"
+
+
 class TestActionLog:
     def test_read_actions_last_line_wins(self, hq):
         for result in ("executing", "executed"):

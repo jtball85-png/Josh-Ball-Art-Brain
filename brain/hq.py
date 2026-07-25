@@ -73,6 +73,7 @@ def _escalation_from_block(escalation_id: str, block: str) -> EscalationItem:
         resolved=date.fromisoformat(fields["resolved"]) if "resolved" in fields else None,
         resolution=fields.get("resolution"),
         decided_by=fields.get("decided_by"),
+        action_ref=fields.get("action_ref"),
     )
 
 
@@ -205,6 +206,51 @@ class HQ:
             result[dept] = entries
         return result
 
+    # ---- Product catalog (snapshot of live products across platforms) ----
+
+    def _product_catalog_path(self) -> Path:
+        return self.root / "products" / "catalog.json"
+
+    def read_product_catalog(self) -> dict:
+        """The last-synced product snapshot, or an empty catalog if never
+        synced. Read-only, no API call — the dashboard and agents read this
+        file; refreshing it (the live pull) is an explicit sync."""
+        path = self._product_catalog_path()
+        if not path.exists():
+            return {"generated_at": None, "products": []}
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def write_product_catalog(self, generated_at: str, products: list[dict]) -> Path:
+        """Persist the unified catalog: machine-readable JSON + a human-readable
+        Markdown mirror the CEO can read straight from git."""
+        path = self._product_catalog_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        catalog = {"generated_at": generated_at, "products": products}
+        _atomic_write(path, json.dumps(catalog, indent=2) + "\n")
+        _atomic_write(path.with_suffix(".md"), self._product_catalog_md(catalog))
+        return path
+
+    def product_catalog_markdown(self) -> str:
+        """The current catalog as the human/agent-readable Markdown string."""
+        return self._product_catalog_md(self.read_product_catalog())
+
+    @staticmethod
+    def _product_catalog_md(catalog: dict) -> str:
+        lines = ["# Product catalog",
+                 f"\n_Last synced: {catalog.get('generated_at') or 'never'}_\n"]
+        products = catalog.get("products", [])
+        if not products:
+            lines.append("\nNo products synced yet.\n")
+            return "\n".join(lines)
+        for p in products:
+            lines.append(f"\n## {p.get('title', '(untitled)')}  ·  {p.get('platform')}")
+            lines.append(f"- Status: {p.get('status')}")
+            lines.append(f"- External id: {p.get('external_id') or '—'}")
+            lines.append(f"- Colorways: {', '.join(p.get('colorways', [])) or '—'}")
+            lines.append(f"- Sizes: {', '.join(p.get('sizes', [])) or '—'}")
+            lines.append(f"- Price: {p.get('price_range', 'not set')}")
+        return "\n".join(lines) + "\n"
+
     # ---- Decisions (append-only) -----------------------------------------
 
     def _decisions_log_path(self) -> Path:
@@ -302,6 +348,8 @@ class HQ:
             f"- Urgency: {item.urgency}\n"
             f"- Summary: {item.summary}\n"
         )
+        if item.action_ref:
+            block += f"- Action ref: {item.action_ref}\n"
         if not path.exists():
             path.write_text("# Escalation Queue\n\n", encoding="utf-8")
         with open(path, "a", encoding="utf-8") as f:
@@ -343,6 +391,10 @@ class HQ:
             f"- Raised by: {item.raised_by}\n"
             f"- Urgency: {item.urgency}\n"
             f"- Summary: {item.summary}\n"
+        )
+        if item.action_ref:
+            resolved_block += f"- Action ref: {item.action_ref}\n"
+        resolved_block += (
             f"- Resolved: {item.resolved.isoformat()}\n"
             f"- Resolution: {item.resolution}\n"
             f"- Decided by: {item.decided_by}\n"

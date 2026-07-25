@@ -1,17 +1,27 @@
-# Minivan Dads — The Brain (COO)
+# Josh Ball Art — The Brain (COO)
 
-The operational brain of Minivan Dads Inc., a print-on-demand apparel brand
-targeting minivan-driving dads. The brain is a Python CLI + local web console
+The operational brain of Josh Ball Art, Josh Ball's Ventura, CA art
+practice (cyanotype/photogram, B&W photography, suminagashi, linocut — see
+`hq/charter/company.md`). The brain is a Python CLI + local web console
 that runs the COO loop: department agents research and file weekly reports
 into **HQ** (a git-tracked Markdown filesystem — the company's single source
 of truth), the brain synthesizes board-meeting agendas, walks the CEO through
 rulings, moderates multi-agent boardroom debates, and writes every decision
 back to HQ as a plain-text file change you can inspect in git.
 
+Originally built for Minivan Dads Inc. (a POD apparel brand); the CEO
+pivoted the brain to run Josh Ball Art on 2026-07-21 (decision logged in
+`hq/decisions/log.md`). Minivan Dads is parked, not deleted — its product
+ideas and specs live in `minivandads/`, its charter is archived at
+`hq/charter/archive/minivan-dads-company.md`. The architecture below is
+brand-agnostic and didn't need to change for the pivot.
+
 Current state: Phase 1 (HQ + CLI) and its additions (executor framework,
 boardroom, CEO dashboard) are complete; Phase 2 is live — the Market Intel
-agent runs on a weekly schedule. Full specs live in `docs/specs/`; the phase
-roadmap is at `hq/charter/roadmap.md`.
+agent runs on a weekly schedule; live Printful and Shopify connectors sync
+the real Josh Ball Art store. Full specs live in `minivandads/specs/`
+(written for the original brand, architecture-accurate); the phase roadmap
+is at `hq/charter/roadmap.md`.
 
 ## Setup
 
@@ -53,9 +63,9 @@ table. Voice input is your OS dictation key (Win+H) into any prompt.
 
 ## The CEO dashboard
 
-**Daily front door: double-click `Minivan Dads HQ.bat`** in the project
+**Daily front door: double-click `Josh Ball Art HQ.bat`** in the project
 folder — it starts the console (if not already running) and opens it in
-your browser. To stop the server, close the minimized "Minivan Dads HQ"
+your browser. To stop the server, close the minimized "Josh Ball Art HQ"
 window on the taskbar. Tip: right-click the .bat → Send to → Desktop
 (create shortcut) for a desktop icon.
 

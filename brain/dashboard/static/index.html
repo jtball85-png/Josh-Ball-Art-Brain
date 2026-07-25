@@ -3,19 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minivan Dads — CEO Console</title>
+<title>Josh Ball Art — CEO Console</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 <div class="app">
   <header>
-    <h1>MINIVAN <b>DADS</b> · CEO CONSOLE</h1>
+    <h1>JOSH BALL <b>ART</b> · CEO CONSOLE</h1>
     <span class="sub" id="headerSub">loading…</span>
   </header>
 
   <nav>
     <button class="on" data-v="home">Dashboard</button>
     <button data-v="depts">Departments</button>
+    <button data-v="products">Products</button>
     <button data-v="board">Boardroom</button>
     <button data-v="cmds">Commands</button>
   </nav>
@@ -77,6 +78,14 @@
   <section class="view" id="depts">
     <div id="deptGrid" class="grid"></div>
     <div id="deptDetail" style="display:none"></div>
+  </section>
+
+  <section class="view" id="products">
+    <div class="card">
+      <h2>Live products</h2>
+      <p class="dim" style="margin-top:0">What the board is managing across your stores. Read-only here — the storefront agent runs the upkeep and escalates the walls (price, brand, publish) to you.</p>
+      <div id="productList"><span class="dim">loading…</span></div>
+    </div>
   </section>
 
   <section class="view" id="board">

@@ -18,12 +18,31 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
+from brain.actions.models import ActionResult
 from brain.config import BrainConfig
+from brain.executor import Executor
 from brain.hq import HQ
 from brain.pricing import summarize_usage
 
 STATIC_DIR = Path(__file__).parent / "static"
+
+
+class DenyEscalationRequest(BaseModel):
+    note: str = ""
+
+
+def _action_preview(hq: HQ, action_ref: str | None) -> dict | None:
+    """Plain-language summary of the pending action an escalation refers to,
+    for the console to show before the CEO approves/denies it."""
+    if not action_ref:
+        return None
+    for record in hq.read_actions():
+        if record.id == action_ref:
+            return {"action_id": record.id, "agent": record.agent,
+                    "action_type": record.action_type, "params": record.params}
+    return None
 
 
 def _directive_git_history(hq_root: Path, dept: str) -> list[dict]:
@@ -46,8 +65,8 @@ def _directive_git_history(hq_root: Path, dept: str) -> list[dict]:
     return history
 
 
-def create_app(config: BrainConfig, hq: HQ) -> FastAPI:
-    app = FastAPI(title="Minivan Dads — CEO Console", docs_url=None, redoc_url=None)
+def create_app(config: BrainConfig, hq: HQ, executor: Executor | None = None) -> FastAPI:
+    app = FastAPI(title="Josh Ball Art — CEO Console", docs_url=None, redoc_url=None)
     app.state.chat_error = "chat routes not registered"  # cleared by cmd_dashboard on success
 
     @app.get("/api/health")
@@ -117,7 +136,9 @@ def create_app(config: BrainConfig, hq: HQ) -> FastAPI:
             },
             "escalations": [
                 {"id": e.id, "urgency": e.urgency, "summary": e.summary,
-                 "raised": e.raised.isoformat(), "raised_by": e.raised_by}
+                 "raised": e.raised.isoformat(), "raised_by": e.raised_by,
+                 "action_ref": e.action_ref,
+                 "pending_action": _action_preview(hq, e.action_ref)}
                 for e in sorted(escalations, key=lambda e: e.urgency != "urgent")
             ],
             "recent_decisions": [
@@ -127,6 +148,38 @@ def create_app(config: BrainConfig, hq: HQ) -> FastAPI:
             ],
             "this_week_agenda": agenda,
         }
+
+    @app.post("/api/escalations/{escalation_id}/approve")
+    def approve_escalation(escalation_id: str):
+        """The close-the-loop action: a CEO approval here actually executes
+        the pending change (e.g. a price update) via the executor — no
+        separate manual step in Printful/Shopify afterward."""
+        if executor is None:
+            raise HTTPException(503, "executor not available (no live connectors configured)")
+        esc = next((e for e in hq.read_escalation_queue() if e.id == escalation_id), None)
+        if esc is None:
+            raise HTTPException(404, f"no open escalation {escalation_id!r}")
+        if not esc.action_ref:
+            raise HTTPException(400, f"{escalation_id} has no pending action to approve")
+        try:
+            record = executor.approve_action(esc.action_ref, escalation_id=escalation_id)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        if record.result == ActionResult.EXECUTED:
+            resolution = f"approved — executed as {record.id}"
+        else:
+            resolution = f"approved — execution failed: {'; '.join(record.reasons)}"
+        hq.resolve_escalation(escalation_id, resolution=resolution, decided_by="CEO")
+        return {"ok": record.result == ActionResult.EXECUTED, "action": record.to_json_dict()}
+
+    @app.post("/api/escalations/{escalation_id}/deny")
+    def deny_escalation(escalation_id: str, body: DenyEscalationRequest):
+        esc = next((e for e in hq.read_escalation_queue() if e.id == escalation_id), None)
+        if esc is None:
+            raise HTTPException(404, f"no open escalation {escalation_id!r}")
+        resolution = "denied by CEO" + (f" — {body.note.strip()}" if body.note.strip() else "")
+        hq.resolve_escalation(escalation_id, resolution=resolution, decided_by="CEO")
+        return {"ok": True}
 
     @app.get("/api/attention")
     def attention():
@@ -220,6 +273,13 @@ def create_app(config: BrainConfig, hq: HQ) -> FastAPI:
                 for entry in all_time["by_command"]
             ],
         }
+
+    @app.get("/api/products")
+    def products():
+        """The unified product catalog, read-only from the last synced
+        snapshot — no live API call (looking is free). Refresh it with
+        `brain sync-products` or a storefront agent run."""
+        return hq.read_product_catalog()
 
     @app.get("/api/departments")
     def departments():

@@ -1,5 +1,5 @@
 # Project Memory
-Last updated: 2026-07-17 (end of day)
+Last updated: 2026-07-21 (end of day)
 
 This file captures decisions, reasoning, and session context that
 project-context.md doesn't hold. It is Claude's memory between sessions.
@@ -13,7 +13,7 @@ Decisions that shaped the project — keep these forever.
 
 - 2026-07-15 — Architecture decision: CLI app + git-diffable Markdown filesystem (HQ) as the single source of truth, no database/server/frontend — reason: every state change must be human-readable and inspectable by the CEO in git; no infra needed for a single-operator tool.
 - 2026-07-15 — Tech stack chosen: Python + Claude Agent SDK / Anthropic API — reason: specified in the handoff brief (`minivan-dads-brain-project-brief.md`).
-- 2026-07-15 — GitHub sync target: https://github.com/jtball85-png/Minivan-Dads — used by /end-of-day for commits/pushes.
+- 2026-07-15 — GitHub sync target: https://github.com/jtball85-png/Minivan-Dads — used by /end-of-day for commits/pushes. **Renamed 2026-07-24** to `https://github.com/jtball85-png/Josh-Ball-Art-Brain` (part of the post-pivot brand scrub); local `origin` remote updated to match. GitHub redirects the old URL, but this is the canonical one going forward.
 - 2026-07-15 — Phase 1 scope is strictly HQ + the brain CLI (status/ingest/meeting/ask/directive). No department agents, no Shopify/Printful/Meta integrations, no schedulers, no web UI — but design must not preclude them later (see `minivan-dads-phase-roadmap.md`).
 - 2026-07-15 — Decision boundaries are hard rules enforced in code: money, brand identity, legal, and irreversible actions are always [CEO REQUIRED] — the brain may recommend but never rule on these.
 
@@ -22,6 +22,241 @@ Decisions that shaped the project — keep these forever.
 ## Sessions
 
 Most recent session at the top.
+
+## Session — 2026-07-24
+
+**Focus:** CEO reported having completed items from a prior memory list (API-key
+hygiene); asked to live-check that the dashboard console reads Josh Ball Art
+(it did, after a stale-browser-cache false alarm was ruled out); then directed
+that the board be able to manage all product matters including pricing, with
+the CEO always checked first before action, and — new — CEO approval should
+execute the change itself with no manual re-apply in Printful/Shopify.
+
+**Decisions made:**
+- CEO ruled: board proposes pricing/product changes, CEO sign-off stays
+  mandatory (no change to that gate), but once the CEO approves, the system
+  executes it — closing the "approve in the meeting, then go retype it by
+  hand" gap. Implemented as `Executor.approve_action()`: it can only ever
+  unlock an action that was rejected *solely* for being outside its agent's
+  allowed_actions (hard denials, bad params, suspended agents still block it).
+
+**Problems solved:**
+- Found `hq.resolve_escalation()` only ever wrote a text note — there was no
+  code path anywhere from "CEO approved" to an actual write. Closed it:
+  `EscalationItem.action_ref` links an escalation back to its rejected
+  action; the dashboard's new `/api/escalations/{id}/approve|deny` endpoints
+  execute or resolve for real; console UI added to the escalation inbox.
+- `shopify.set_price` was registered but deliberately unimplemented (its own
+  docstring said so) — implemented for real via `productVariantsBulkUpdate`,
+  since Shopify is JBA's actual storefront and Printful-side pricing alone
+  wouldn't have made the feature do anything real for this store.
+- Charter and storefront directive text updated to match the new policy.
+
+**Approaches discussed:**
+- Considered letting the board meeting's free-text LLM-drafted escalation
+  resolution ("approved"/"denied" prose) drive execution, but rejected it —
+  matching the codebase's own "governance is code, not prompts" principle,
+  execution is gated by a structured dashboard Approve/Deny action instead,
+  never by parsing LLM prose.
+
+**Left unresolved:**
+- The API-key hygiene items from the prior session's memory (Anthropic key
+  consolidation, Printful JBA token `product_templates/read` scope, token
+  rotation) were never actually re-verified this session — the CEO said "I
+  did it" but the conversation moved to the console check and then the
+  pricing feature before confirming which items were done. Still needs a
+  real check next session — see `revisit-api-keys` memory.
+- `brain.exe` (the compiled console-script entrypoint) is broken — crashes
+  silently with exit code 1, no stdout/stderr at all. `python -m brain` works
+  fine; likely needs `.venv/Scripts/pip install -e ".[dev]"` re-run. Not fixed
+  this session (unrelated to the task at hand).
+- The new approve-and-execute path has not been exercised against the real
+  live Shopify store — only against fakes/tests. First real use should be a
+  low-stakes test listing, not a live product.
+- Storefront's directive now tells it to propose prices as structured
+  ACTION blocks, but the agent hasn't actually run under that updated
+  directive yet — first real proposal will be the real test of the whole
+  loop end to end.
+
+**Files changed this session:**
+```
+14 files changed, 534 insertions(+), 37 deletions(-)
+(1 commit: a173a63 — Board can propose product/pricing changes; CEO approval
+executes them)
+brain/connectors/shopify.py, brain/dashboard/app.py,
+brain/dashboard/static/app.js, brain/dashboard/static/style.css,
+brain/executor.py, brain/hq.py, brain/main.py, brain/models.py,
+hq/charter/company.md, hq/directives/storefront.md,
+tests/test_dashboard.py, tests/test_executor.py,
+tests/test_hq_escalations.py, tests/test_shopify_connector.py
+```
+
+## Session — 2026-07-23
+
+**Focus:** CEO directed the drive-asset handoff (D:\Products\Printful Products), asked the brain to manage the design-to-POD workflow, then to review live products and ultimately run the full joshballart.com Shopify store (pics, descriptions, SEO, pricing), and finally to run the review through the board.
+
+**Decisions made:**
+- CEO approved the managed-asset-system plan including destructive drive cleanup (Category A macOS junk outright; Category B zips only after per-zip verification their contents exist extracted) and chose stop-at-tooling-ready — no product pushed live this pass.
+- CEO created two credentials this session (both CEO-only actions): a Josh Ball Art Printful API token (re-issued at ACCOUNT level after the single-store version couldn't read product templates), and the "JBA Brain" Shopify custom app (dev-dashboard flow) whose Admin API token was captured via a local OAuth code exchange after two browser-side attempts (incl. Claude-in-Chrome) failed.
+- CEO ruled color variants of one design = one product listing with variants, never one listing per color; "collection" = grouping across product types sharing a design.
+- CEO wants a board meeting to possibly redefine the Josh Ball Art brand before the prints/drinkware naming/description/SEO/pricing pass; W30 agenda is built and waiting; recommended order = #meeting on the 4 agenda decisions, then #boardroom on brand redefinition.
+
+**Problems solved:**
+- Bodysurf Fin master art recovered: real SVG master found on the drive (Designs Digital Illustrations\Bodysurf Fin Fill), verified visually against the CEO's reference, curated into garage/design/designs/bodysurf-fin/ — permanently ends the re-tracing failure mode.
+- Two Printful accounts discovered (old key → "Theminivandads" only): both now in .env (JBA primary, *_MVD preserved). JBA store is Shopify-platform → /sync/products API only; API product creation is manual-store-only, so new-product pushes stay a CEO dashboard click ("Add to store" from their 11 saved templates).
+- Manifest corrected three times as better data arrived: poster live (storefront fetch), beanie live (Printful API), can-cooler art exists in Printful cloud templates (not on drive). Every not-yet-live product (water bottle, tee, black mug, 2 can coolers) already has a finished Printful template — only the tank top has no art anywhere.
+- Shopify token: the OAuth exchange needs any non-browser HTTP client, not a hosted backend — garage/design/shopify_token_exchange.py POSTs the code+client secret and writes .env; token verified with GraphQL reads (write_products scope).
+- Silent empty-output bug (regression-tested): storefront agent filed a 2-byte report and ingest a 0-byte agenda — both hit the 8192 max_tokens cap with the whole budget eaten by adaptive thinking, and truncated output was treated as complete. Fixed: LLMTruncated raised on stop_reason=max_tokens in both call paths; <50-char reports/agendas refused, never written; caps raised (agent/ingest 24576, meeting 16384); SDK's "streaming required" guard on big caps handled by a drained-stream _create() helper.
+- Margin audit vs the 30% floor (Printful catalog costs): 97/189 variants below floor — tumbler 9% ($19.00 vs $17.29 cost), enamel cup 11%, mugs low-20s, framed poster 60/90 under; unframed poster (57–70%) and beanie (47%) healthy. Recommendations escalated in garage/store-review-2026-07-23.md; no prices touched.
+
+**Approaches discussed:**
+- Shopify connector is GraphQL-only (REST product endpoints deprecated for new apps); update_listing_copy + update_listing_images implemented with snapshot/restore; set_price stays ungranted → always escalates. First governed dry-run: ACT-2026-W30-0009, a tumbler copy rewrite in charter voice, awaiting CEO review.
+- Full store synced: 107 products (originals, POD, cyanotype drafts, Jacquard supplies) in hq/products/catalog.json; sync_products gracefully skips the Printful manual-store endpoints the ecommerce-platform store rejects.
+- Kept 3 zips on the drive during cleanup because they hold never-extracted content (Posters_in.zip has a 24x36 PSD missing from the extracted folder; Black Fin mug mockups; a can-cooler template PSD).
+
+**Left unresolved:**
+- CEO wants to REVISIT THE BOARD CYCLE PLAN next session (their words at end of day) — the W30 agenda (4 [CEO REQUIRED] decisions: Neptune's Garden unblock, mug/cup re-pricing, size standardization, stale-MVD escalation cleanup) is built but no meeting held.
+- Brand-redefinition boardroom session not yet run; prints/drinkware naming/SEO/pricing pass gated behind it.
+- Tumbler copy dry-run (ACT-2026-W30-0009) + 4 storefront title dry-runs (ACT-2026-W30-0010..0013) await CEO review; storefront directive still falsely says Shopify actions aren't registered (needs a #directive board pass).
+- Both Printful tokens and the Shopify client secret passed through chat transcripts — rotation owed at the next key-hygiene pass (see revisit-api-keys memory).
+- Large-file hosting for poster-scale Printful uploads still undecided; platform-aware Printful /sync/products connector extension not built.
+
+**Files changed this session:**
+```
+35 files changed, 11589 insertions(+), 225 deletions(-)
+(7 commits: ec0369b asset system, ef81b39 candidates+specs, 4d8268c JBA
+Printful access, 87d00db 11 templates read, 739894e store review/margin
+audit, b5d8de0 Shopify connector live, 7482c89 LLMTruncated fix + W30
+board cycle; full stat in git)
+```
+
+## Session — 2026-07-21 (2)
+
+**Focus:** CEO wanted to shift focus to Printful merch beyond apparel (posters, mugs, etc.), starting with an existing Illustrator design ("Bodysurf Fin") with multiple color combos already pushed to the Josh Ball Art store, and asked Claude Code to manage merch and the store going forward.
+
+**Decisions made:**
+- Store target confirmed as **Josh Ball Art** (not a Minivan Dads revival) for this POD merch line.
+- CEO chose a recreation-as-test approach for the Bodysurf Fin design (no source file loaded — the real Illustrator/Photoshop files are on an external drive that wasn't connected this session); proper design/artwork handoff from that drive is explicitly pinned for a later session.
+- CEO rejected the recreation outright as a poor visual match to the reference photo and instructed all draft files be deleted — done, nothing was ever pushed live.
+- No work started on a Shopify connector; CEO said nothing to do on that right now.
+
+**Problems solved:**
+- None — the design recreation attempt did not reach an accepted state.
+
+**Approaches discussed:**
+- Confirmed via a live fetch of joshballart.com/collections/drinkware that "Bodysurf Fin" is already a real, live design across 3 drinkware products (mug, enamel cup, tumbler) with 7 real color combos on file: Red/Yellow, Peach/Burnt Orange, Blue/Pink, Peach/Blue, Lime Green/Electric Blue, Lavender/Teal, Black/White — useful reference for any future attempt.
+- Clarified product/collection semantics: color variants of one design belong in a single Printful product listing (variants), not separate listings per color; "collection" is for grouping across different product types that share a design.
+- Confirmed no Shopify MCP server or connector exists yet (`brain/connectors/` has Printful and Etsy only; `shopify.update_listing_copy`/`shopify.update_listing_images` are registered as allowed action *types* in `brain/actions/limits.yaml` but have no implementation). Building one requires the CEO to create a Shopify custom app/Admin API access token first (CEO-only, account-credential creation) — even once built, price/publish/brand-identity changes would still always escalate to the CEO per the governance model, never become autonomous.
+
+**Left unresolved:**
+- Real Bodysurf Fin recreation from the actual Illustrator/Photoshop source file — waiting on the CEO to connect the `E:\Products\Printful Products` external drive.
+- Whether/when to build a real Shopify connector — no credentials created yet, no code started.
+
+**Files changed this session:**
+None committed. Design draft files (`garage/design/bodysurf-fin-2026-07-21*`) were created and then fully deleted per the CEO's rejection before anything was committed — net zero change to the repo.
+
+## Session — 2026-07-21
+
+**Focus:** Started on Minivan Dads roadmap items, but the CEO reconsidered POD apparel economics (thin margins) and pivoted the whole project to run their real art business, Josh Ball Art — then spent the rest of the session building the print-production pipeline: Lightroom/Photoshop workflow correction, a master-to-print-sizes derivation tool, and a printable cheat sheet with a real print-QA gate.
+
+**Decisions made:**
+- Company pivot ratified: the brain now runs **Josh Ball Art** (joshballart.com, Ventura CA — cyanotype/B&W photography/suminagashi/linocut, Jacquard-sponsored). Minivan Dads is PARKED, not deleted — charter archived to `hq/charter/archive/minivan-dads-company.md`, tee stays unpublished in Printful, decision logged 2026-07-21.
+- Strategy ratified (CEO's own priority order): 1) originals, 2) giclée prints — mostly black & white photography plus cyanotype prints "priced like photos" — sizes 8×10/11×14/16×20 with white borders, 3) cyanotype/suminagashi workshops (popup + outdoor forage formats), 4) POD under a 30% margin floor (Sticker Mule to explore), 5) Jacquard supply shop maintained. Target: board runs 75–80% of day-to-day.
+- Print partner: **FinerWorks chosen as primary** (CEO's call — biggest fine-art paper selection, praised archival matte; confirmed it has a free Shopify fulfillment app + API, so full automation is real, not aspirational). Prodigi = fallback, gicleetoday kept for hand-touched runs, theprintspace/creativehub ruled out (+20% fee, UK-centric).
+- Master-file philosophy locked in: the master is exported **full native resolution, natural aspect ratio, borderless, never resized/resampled** — all sizing/bordering happens downstream, per-size, non-destructively, so one master serves every print size.
+- Photoshop crop workflow settled: crop happens in Photoshop (not Lightroom) via the Crop tool with "Delete Cropped Pixels" unchecked (non-destructive); Lightroom stays for raw-level Develop (exposure/color/lens) only. The saved layered PSD is the permanent "negative"; the flattened export is a one-way "print" derived from it.
+- Home test-printing must use `File > Print` (Photoshop-manages-colors, paper-specific ICC profile, printer driver color management OFF) — never `Image > Image Size`, which was the CEO's years-long habit and root cause of an under-resolution master.
+- Lightroom catalog relocated in principle: catalog file must live on the **internal drive** (not the external SSD it shared with the photo library) — this is the diagnosed root cause of LRC's constant crashing, independent of the drive being SSD (the risk is USB connection reliability, not spinning-disk latency). Backups go to the external drive; correction (2026-07-21, caught when the CEO actually looked at the File menu): Lightroom Classic has no "Save Catalog As" command. The real move flow is: close Lightroom, copy the `.lrcat` file + its matching `...Previews.lrdata` folder from the external drive to the internal drive in File Explorer, then in Lightroom use File → Open Catalog… and point it at the new internal-drive copy (photo files themselves don't need to move).
+- Deliverable format decision: for a print-oriented artifact, ship a **pre-verified PDF**, not just an HTML page relying on the hosted Artifact viewer's print path — the hosted URL's wrapper likely explains a 3-page/broken print the CEO saw even though the raw local file renders correctly (2 pages, verified).
+
+**Problems solved:**
+- CEO's first real master export (`Test.jpg`, 2385×1590) ran through the real derivation pipeline: 8×10 passed (265 DPI), 11×14 and 16×20 failed the 200 DPI floor (191/132 DPI) — confirmed the file was undersized, traced to the Image-Size-before-export habit, not a pipeline bug.
+- Print-button dead click in the cheat sheet artifact: `window.print()` from a script is blocked by the Artifact's iframe sandbox (no visible error, just silently no-ops) — fixed by replacing the fake button with a `Ctrl+P` instruction badge (a real OS-level shortcut bypasses the sandbox restriction entirely).
+- `verify_print.py`'s own first version failed silently (exit 0, no PDF) — root cause: Edge's headless PDF write finishes a beat after the process returns, and the script checked `pdf_path.exists()` immediately with no wait. Fixed with a poll loop (up to 10s) instead of a guessed fixed sleep. Also fixed absolute-vs-relative path handling for the GUI subprocess.
+
+**Approaches discussed:**
+- MCP servers for Photoshop exist (community/unofficial — `photoshop-mcp`, `adobe-mcp`, `dcc-mcp-photoshop` — via UXP plugin + local bridge), correcting an earlier flat "I can't be live in your Photoshop" — technically possible, but deliberately not adopted: the derive-from-a-clean-master architecture is safer (never touches the live PSD) and the only thing an MCP bridge would save is one Export click, not worth the broad unofficial-tool trust surface.
+- Etsy's native Printful integration would auto-fulfill Etsy orders once connected — order/delivery tracking can mostly ride on the Printful connector already built, not a separate Etsy API build.
+
+**Left unresolved:**
+- Etsy shop for Josh Ball Art: confirmed absent from Google search entirely (likely dormant/empty) — CEO has not yet acted on connecting/reviving it.
+- FinerWorks sample order not yet placed — waiting on the CEO to pick hero image(s) (one B&W photo + one cyanotype, since B&W tonal neutrality is the key test) and export a proper full-resolution master.
+- Lightroom catalog has not yet actually been moved to the internal drive — diagnosed and planned, not executed.
+- The hosted-Artifact-wrapper theory for the 3-page print discrepancy is a strong hypothesis, not confirmed (no way to authenticate and test the exact hosted URL from this environment) — worked around via a verified local PDF rather than root-caused on the platform side.
+- API-key hygiene revisit still pending (carried over from 2026-07-20, see the standing `revisit-api-keys` memory).
+
+**Files changed this session:**
+```
+ garage/prints/derive_prints.py                     | 104 ++++++++
+ garage/prints/verify_print.py                      | 110 +++++++++
+ garage/prints/workflow-cheat-sheet.html            | 268 +++++++++++++++++++++
+ garage/prints/workflow-cheat-sheet.pdf             | (new, verified 2-page PDF)
+ garage/prints/masters/, proofs/, ready/            | (pipeline test artifacts)
+ garage/research/joshballart-phase0-print-partner-2026-07-21.md | 74 ++++++
+ hq/charter/archive/minivan-dads-company.md         | 79 ++++++ (new, archived)
+ hq/charter/company.md                              | 118 ++++----- (rewritten: Josh Ball Art)
+ hq/decisions/log.md                                |   5 +
+ hq/directives/creative.md                          |  55 ++---
+ hq/directives/market_intel.md                      |  56 +++--
+ hq/directives/storefront.md                        |  89 +++---- (x2 this session)
+ 16 files changed, 783 insertions(+), 175 deletions(-)  (5 commits: d228bef..846ad60)
+```
+
+## Session — 2026-07-20
+
+**Focus:** Automating design→product — build the governed Printful connector (via plan mode) to turn approved designs into real products, then reframe into board-run product management across Printful/Etsy.
+
+**Decisions made:**
+- Built the first real connector `brain/connectors/printful.py` (account-level token auth via X-PF-Store-Id + store auto-resolve; catalog reads; governed `printful.create_product` through the executor; async mockup generation). Rollback uses a deterministic Printful `external_id` snapshotted pre-create, so a create is undone by `DELETE @external_id` without the executor needing the new product id.
+- Live-built the real product: "Let's play the quiet game." tee — serif front + "THE MINIVAN DADS" left sleeve, 3 dark colorways (Black/Navy/Dark Grey Heather), S–2XL, 15 variants, unpublished, zero spend. Old test product cleaned up via governed rollback (rollback rehearsed live; capability auto-demoted supervised→dry_run as designed).
+- Font/wordmark: CEO chose the SERIF (Georgia) look for the sayings over the researched bold-sans (Oswald/Bebas/Anton) — taste won over the research recommendation; sleeve wordmark = "THE MINIVAN DADS" (two words), not the run-together handle.
+- File hosting: Printful fetches the design from a public URL at creation time; used litterbox/catbox (auto-expiring) since the repo is private — creation-time fetch only, so expiry is fine.
+- Pipeline documented as a repeatable playbook (`docs/design-to-store-pipeline.md`): research→design→product→listing→publish→fulfill→learn, the 4 CEO-only walls (money/brand/legal/publish), and the API-access model (never browser login; access only via APIs the CEO authorizes).
+- OWNERSHIP REFRAME (CEO correction): CEO does NOT want a console to operate products by hand — the BOARD (storefront agent) runs product upkeep and pulls the CEO in only at the walls or on request. Rebuilt the plan around this.
+- Built board-run product management: unified `ProductView` model (`brain/products.py`, Printful now + Etsy-ready), catalog snapshot (`hq/products/catalog.json`+`.md`, read by dashboard/agents — "looking is free", no live API on view), governed edit actions (printful.update_product/set_retail_price, etsy.update_listing/set_price), storefront activated Tier 1 as a *doing* agent. `run_agent` now parses `### ACTION` blocks and routes them through the executor — copy edits preview (dry-run) until granted; price/brand always escalate. New `brain sync-products` command + read-only dashboard Products tab.
+- Etsy built ready-but-NOT-wired (connector inert until a shop is connected); order/delivery tracking kept a SEPARATE follow-on (both CEO decisions in plan mode).
+- Storefront's first live run: escalated a **$28** retail-price recommendation (~37% margin over ~$17.70 landed cost, within charter's $27–29 band); flagged "quiet game" as a saturated generic saying already sold verbatim elsewhere (NO trademark collision found) needing a hard minivan-dad differentiation angle; drafted a strong on-brand description + 7 SEO tags.
+
+**Problems solved:**
+- Tiny-print bug (CEO caught it): the real product printed the design ~4in, floating in the 12×16 area. Root cause: the serif front file was rendered at 1200×1600 @300dpi (=4×5.3in native) AND create sent no `position`. Fix: re-render at 3600×4800 (12×16in @300) AND send explicit fill positions per file. Lesson: verify against Printful's OWN stored placement preview, not the mockup generator (the generator independently scales to fill, which masked the bug).
+- create_product only took one print file → extended to a `files` list so one product carries front + sleeve.
+- Storefront's description/tags action was correctly REJECTED — a Printful product holds only a *name*; descriptions/tags live on the Etsy listing (not connected). Governance caught the shape mismatch; tuned the storefront directive so the agent parks copy as "Draft listing copy (ready for Etsy)" instead of proposing a doomed action (prompt-file fix, the standard fix).
+- Invalid ANTHROPIC_API_KEY (401) blocked the first agent run — env issue: a second key made on the CEO's laptop disabled the original. CEO re-enabled the original; verified live with a 1-token call.
+
+**Approaches discussed:**
+- Etsy architecture: Printful's native Etsy integration auto-fulfills Etsy orders and pushes tracking, so order tracking can read Printful orders (no separate Etsy API needed just for fulfillment). CEO opens the shop + connects to Printful (browser OAuth on their side); the machine never logs into Etsy's website.
+- Governance granularity: copy edits allowed (dry-run default, earn supervised/auto) vs. price ABSENT from allowed_actions → always rejected+escalated — mirrors the shopify copy/set_price pattern. Price/brand never earn autonomy.
+
+**Left unresolved:**
+- Etsy shop doesn't exist yet — CEO's step zero (open shop + connect to Printful) gates going live; the drafted description/SEO and the Etsy connector wait on it.
+- $28 retail-price recommendation is escalated, awaiting CEO approval — until a price is set, the tee cannot sell.
+- API-key hygiene needs a revisit (multiple Anthropic keys across the CEO's machines) — saved as a standing memory.
+- Brand name (from prior sessions) still not finally decided.
+
+**Files changed this session:**
+```
+ brain/actions/limits.yaml                   |  25 +-
+ brain/actions/registry.py                   |  43 +++-
+ brain/agent.py                              |  57 ++++-
+ brain/config.yaml                           |   4 +-
+ brain/connectors/etsy.py                    |  64 +++++
+ brain/connectors/printful.py                | 263 +++++++++++++++++++++
+ brain/dashboard/app.py                      |   7 +
+ brain/dashboard/static/{app.js,index.html,style.css} | 43 +
+ brain/hq.py                                 |  45 ++++
+ brain/main.py                               | 114 ++++++++-
+ brain/products.py                           | 147 ++++++++++++
+ brain/prompts/agent_core.md                 |  21 ++
+ docs/design-to-store-pipeline.md            | 125 ++++++++++
+ garage/design/create_printful_product.py    | 112 +++++++++
+ hq/directives/storefront.md                 |  66 +++++-
+ hq/products/catalog.{json,md} + reports/storefront/2026-W30.md + actions/escalations trail
+ tests/test_printful_connector.py            | 353 ++++++++++++++++++++++++++++
+ tests/test_products.py                      | 111 +++++++++
+ tests/test_storefront_agent.py              | 117 +++++++++
+ tests/{test_hq_directives,test_limits}.py   |  11 +-
+ 33 files changed, 1947 insertions(+), 30 deletions(-)  (302 tests passing)
+```
 
 ## Session — 2026-07-19
 

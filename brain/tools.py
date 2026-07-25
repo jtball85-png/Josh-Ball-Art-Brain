@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 
 TIMEOUT = 12  # RDAP can be slow for less common TLDs (.shop timed out at 8s in testing)
-USER_AGENT = "Mozilla/5.0 (compatible; MinivanDadsResearch/1.0; +read-only availability check)"
+USER_AGENT = "Mozilla/5.0 (compatible; JoshBallArtResearch/1.0; +read-only availability check)"
 COMMON_HEADERS = {"User-Agent": USER_AGENT, "Accept": "text/html,application/json",
                   "Accept-Language": "en-US,en;q=0.9"}
 
@@ -139,7 +139,7 @@ TOOL_SCHEMAS = [
         ),
         "input_schema": {
             "type": "object",
-            "properties": {"domain": {"type": "string", "description": "e.g. minivandads.com"}},
+            "properties": {"domain": {"type": "string", "description": "e.g. joshballart.com"}},
             "required": ["domain"],
         },
     },

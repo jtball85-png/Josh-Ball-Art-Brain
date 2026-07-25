@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "minivan-dads-brain"
+name = "josh-ball-art-brain"
 version = "0.1.0"
-description = "The Brain — COO orchestrator for Minivan Dads Inc."
+description = "The Brain — COO orchestrator for Josh Ball Art."
 requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.40",

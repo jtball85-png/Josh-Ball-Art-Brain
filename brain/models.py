@@ -41,6 +41,7 @@ class EscalationItem:
     resolved: date | None = None
     resolution: str | None = None
     decided_by: str | None = None
+    action_ref: str | None = None  # id of the rejected ActionRecord this escalation came from
 
 
 @dataclass

@@ -1,11 +1,19 @@
-# CLAUDE.md — Minivan Dads: The Brain
+# CLAUDE.md — Josh Ball Art: The Brain
 
-Minivan Dads Inc. is a POD apparel company run by a multi-agent system. This
-repo is both the company (the `hq/` files) and the machine that runs it (the
-`brain/` package). The human is the CEO — a non-programmer. Explain in plain
-language, describe outcomes over implementations, and never require the
-terminal for company operations (the dashboard is the CEO's surface;
-`Minivan Dads HQ.bat` is the front door).
+Josh Ball Art (Josh Ball's Ventura, CA art practice — cyanotype/photogram,
+B&W photography, suminagashi, linocut) is run day-to-day by a multi-agent
+system. This repo is both the company (the `hq/` files) and the machine
+that runs it (the `brain/` package). The human is the CEO — a
+non-programmer. Explain in plain language, describe outcomes over
+implementations, and never require the terminal for company operations
+(the dashboard is the CEO's surface; `Josh Ball Art HQ.bat` is the front
+door).
+
+Originally built for a different company, Minivan Dads Inc. (a POD apparel
+brand); the CEO pivoted the brain to run Josh Ball Art on 2026-07-21
+(`hq/decisions/log.md`). Minivan Dads is parked, not deleted — its product
+ideas and original specs live in `minivandads/`. Nothing below changed for
+the pivot; the architecture was always brand-agnostic by design.
 
 ## Two rooms: Garage vs. Dashboard
 
@@ -62,7 +70,9 @@ cwd (BRAIN_ROOT env var or upward walk for `hq/charter/company.md`).
 - **`brain/executor.py` is the only path to external writes.** Registered
   actions only; limits.yaml is human-owned, hq/actions/capabilities.yaml is
   machine-owned; missing capability = dry-run; rejections escalate, never
-  drop. No live connectors yet (Phase 2 has none).
+  drop. Live connectors: Printful (`brain/connectors/printful.py`, both the
+  JBA and parked-MVD accounts) and Shopify (`brain/connectors/shopify.py`,
+  GraphQL Admin API). Etsy is built but dormant (no shop connected yet).
 - **`brain/dashboard/app.py` never imports `brain.llm`** (AST-enforced by a
   test). Chat/LLM routes live in `brain/dashboard/chat.py` only.
 - **Agent prompts are files in `brain/prompts/`, never hardcoded strings.**
@@ -86,8 +96,10 @@ cwd (BRAIN_ROOT env var or upward walk for `hq/charter/company.md`).
 - Cross-session memory: `project-context.md` + `project-memory.md`,
   maintained by `/start-of-day` and `/end-of-day` — run them at session
   start/end.
-- Specs and handoff docs live in `docs/specs/`; the phase roadmap (what to
-  build when, and what's deliberately deferred) is also at
+- Original handoff specs (architecture-accurate, written for the
+  now-parked Minivan Dads brand) live in `minivandads/specs/`; the current
+  design→store playbook is `docs/design-to-store-pipeline.md`; the phase
+  roadmap (what to build when, and what's deliberately deferred) is at
   `hq/charter/roadmap.md`. Respect phase gates — don't build ahead of them.
 
 ## Cost model (explain to the CEO when relevant)

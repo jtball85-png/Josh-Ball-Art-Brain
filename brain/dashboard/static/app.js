@@ -21,6 +21,7 @@ const QUICK_CHIPS = {
   home:  [{ t: "#ingest" }, { t: "#meeting" }, { t: "#status" }],
   depts: [{ t: "@market_intel ", focus: true }, { t: "#agent market_intel" },
           { t: "#discuss market_intel" }, { t: "#collab market_intel, creative: ", focus: true }],
+  products: [{ t: "#agent storefront" }],
   board: [{ t: "#discuss market_intel" }, { t: "#ingest" }, { t: "#meeting" }],
   cmds:  [{ t: "#help" }],
 };
@@ -37,6 +38,33 @@ function renderQuickChips(tab) {
     };
     box.appendChild(b);
   });
+}
+
+/* ---------- products (read-only window on what the board manages) ---------- */
+async function loadProducts() {
+  const box = $("productList");
+  if (!box) return;
+  let data;
+  try { data = await (await fetch("/api/products")).json(); }
+  catch { box.innerHTML = `<p class="dim">Couldn't load products.</p>`; return; }
+  const products = data.products || [];
+  const synced = data.generated_at
+    ? `last synced ${esc(data.generated_at)}`
+    : `never synced — run <code>brain sync-products</code>`;
+  const head = `<p class="dim">${products.length} product(s) · ${synced}</p>`;
+  if (!products.length) {
+    box.innerHTML = head + `<p class="dim">No products yet.</p>`;
+    return;
+  }
+  box.innerHTML = head + products.map((p) => `
+    <div class="prod">
+      ${p.thumbnail_url ? `<img class="pthumb" src="${esc(p.thumbnail_url)}" alt="">` : `<div class="pthumb"></div>`}
+      <div class="pmeta">
+        <strong>${esc(p.title)}</strong>
+        <div class="dim">${esc(p.platform)} · ${esc(p.status)} · price ${esc(p.price_range)}</div>
+        <div class="dim">${esc((p.colorways || []).join(", "))}${p.sizes && p.sizes.length ? " · sizes " + esc(p.sizes.join("/")) : ""} · ${(p.variants || []).length} variants</div>
+      </div>
+    </div>`).join("");
 }
 
 /* ---------- "what needs me today" ---------- */
@@ -151,9 +179,23 @@ async function loadOverview() {
   $("escalations").innerHTML = data.escalations.length
     ? (data.escalations.some((e) => e.urgency === "urgent")
         ? `<div class="urgent-banner">▲ urgent items below — no push alerts exist; this surfaced because you opened the console</div>` : "")
-      + data.escalations.map((e) =>
-        `<div class="row"><span class="${e.urgency === "urgent" ? "urgent" : ""}">${e.urgency === "urgent" ? "▲" : "◦"} ${esc(e.id)} · ${esc(e.summary)}</span><span class="t">${esc(e.raised)}</span></div>`).join("")
+      + data.escalations.map((e) => `
+        <div class="esc-item">
+          <div class="row" style="border-bottom:none;padding-bottom:2px">
+            <span class="${e.urgency === "urgent" ? "urgent" : ""}">${e.urgency === "urgent" ? "▲" : "◦"} ${esc(e.id)} · ${esc(e.summary)}</span>
+            <span class="t">${esc(e.raised)}</span>
+          </div>
+          ${e.pending_action ? `<div class="prev">Pending: ${esc(actionPreview(e.pending_action))}</div>` : ""}
+          ${e.action_ref ? `
+            <div class="chiprow" style="margin:4px 0 0">
+              <button class="primary" data-esc-approve="${esc(e.id)}">Approve — do it</button>
+              <button data-esc-deny="${esc(e.id)}">Deny</button>
+            </div>` : ""}
+        </div>`).join("")
     : `<div class="dim">queue is empty</div>`;
+
+  document.querySelectorAll("[data-esc-approve]").forEach((b) => (b.onclick = () => approveEscalation(b.dataset.escApprove, b)));
+  document.querySelectorAll("[data-esc-deny]").forEach((b) => (b.onclick = () => denyEscalation(b.dataset.escDeny, b)));
 
   $("decisions").innerHTML = data.recent_decisions.length
     ? data.recent_decisions.map((d) =>
@@ -168,6 +210,46 @@ async function loadOverview() {
   // dashboard, so both update after every ingest/meeting/agent action too.
   loadAttention();
   loadCosts();
+}
+
+/* ---------- escalations: approve executes for real, no manual re-apply --- */
+function actionPreview(a) {
+  const params = Object.entries(a.params || {})
+    .map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(", ");
+  return `${a.agent} wants to run ${a.action_type} (${params})`;
+}
+
+async function approveEscalation(id, btn) {
+  btn.disabled = true;
+  const busy = workBusy(`Approving ${id} — executing…`);
+  try {
+    const r = await fetch(`/api/escalations/${encodeURIComponent(id)}/approve`, { method: "POST" });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || `HTTP ${r.status}`);
+    busy.done(data.ok
+      ? `✓ ${id} approved — executed as ${data.action.id}, no further action needed`
+      : `✗ ${id} approved but execution failed: ${(data.action.reasons || []).join("; ")}`);
+  } catch (e) {
+    busy.done(`✗ ${id} — could not execute: ${e.message}`);
+  }
+  loadOverview();
+}
+
+async function denyEscalation(id, btn) {
+  btn.disabled = true;
+  const busy = workBusy(`Denying ${id}…`);
+  try {
+    const r = await fetch(`/api/escalations/${encodeURIComponent(id)}/deny`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: "" }),
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || `HTTP ${r.status}`);
+    busy.done(`✓ ${id} denied`);
+  } catch (e) {
+    busy.done(`✗ ${id} — could not deny: ${e.message}`);
+  }
+  loadOverview();
 }
 
 /* ---------- departments ---------- */
@@ -412,6 +494,23 @@ function brSys(text) {
   s.textContent = text;
   $("brLog").appendChild(s);
 }
+function brBusy(text) {
+  // Boardroom twin of workBusy: bold + spinner while the action is in
+  // flight; .done() settles it into an ordinary sysline.
+  const s = document.createElement("div");
+  s.className = "sysline busy";
+  s.innerHTML = `<span class="spin"></span><span class="t"></span>`;
+  s.querySelector(".t").textContent = text;
+  $("brLog").appendChild(s);
+  return {
+    done(finalText) {
+      const spin = s.querySelector(".spin");
+      if (spin) spin.remove();
+      s.classList.remove("busy");
+      if (finalText !== undefined) s.querySelector(".t").textContent = finalText;
+    },
+  };
+}
 function brSetInput(placeholder, buttonLabel) {
   $("brInput").placeholder = placeholder;
   $("brSend").textContent = buttonLabel;
@@ -485,15 +584,22 @@ async function brOpen(topic, exhibitDept) {
   $("brLog").innerHTML = "";
   $("brChips").innerHTML = "";
   brDeptColors = {};
-  brSys(`brain boardroom "${topic}"` +
+  const busy = brBusy(`brain boardroom "${topic}"` +
         (exhibitDept ? ` — sharing ${exhibitDept}'s latest report with the board` : "") +
         " — convening…");
-  const response = await fetch("/api/boardroom/open", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ topic, exhibit_department: exhibitDept || null }),
-  });
+  let response;
+  try {
+    response = await fetch("/api/boardroom/open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic, exhibit_department: exhibitDept || null }),
+    });
+  } catch (err) {
+    busy.done();
+    throw err;
+  }
   if (!response.ok) {
+    busy.done();
     const detail = (await response.json()).detail || `HTTP ${response.status}`;
     if (response.status === 409) { brShowAbandonOption(detail); return; }
     throw new Error(detail);
@@ -501,6 +607,7 @@ async function brOpen(topic, exhibitDept) {
   brPhase = "debating";
   let round = "";
   await readSSE(response, (e) => {
+    busy.done();  // first event = the convene is no longer "in flight"
     if (e.participants) {
       e.participants.forEach((p, i) => (brDeptColors[p.department] = DEPT_COLORS[i % DEPT_COLORS.length]));
       brSys("convened: " + e.participants.map((p) => p.department + (p.advisory ? " (advisory)" : "")).join(", "));
@@ -626,9 +733,9 @@ async function checkHealth() {
     banner.style.borderColor = "var(--coral)";
     banner.innerHTML =
       `<h2 style="color:var(--coral)">restart needed</h2>
-       <div style="font-size:12px">${problem} Close the "Minivan Dads HQ" ` +
+       <div style="font-size:12px">${problem} Close the "Josh Ball Art HQ" ` +
       `window on your taskbar (or restart your PC), double-click ` +
-      `<code>Minivan Dads HQ.bat</code> again, and refresh this page. If it ` +
+      `<code>Josh Ball Art HQ.bat</code> again, and refresh this page. If it ` +
       `persists, <code>dashboard_startup.log</code> in the project folder ` +
       `says exactly what went wrong — paste it to Claude Code.</div>`;
     document.querySelector(".app").insertBefore(banner, document.querySelector("nav"));
@@ -653,6 +760,27 @@ function workSys(text) {
   s.textContent = text;
   work.log.appendChild(s);
   s.scrollIntoView({ behavior: "smooth", block: "end" });
+}
+function workBusy(text) {
+  // A sysline for an action IN FLIGHT: bold + spinner until .done() is
+  // called, then it settles into an ordinary quiet sysline (the record of
+  // what ran). Always call .done() in a finally — a stuck spinner is worse
+  // than no spinner.
+  workShow();
+  const s = document.createElement("div");
+  s.className = "sysline busy";
+  s.innerHTML = `<span class="spin"></span><span class="t"></span>`;
+  s.querySelector(".t").textContent = text;
+  work.log.appendChild(s);
+  s.scrollIntoView({ behavior: "smooth", block: "end" });
+  return {
+    done(finalText) {
+      const spin = s.querySelector(".spin");
+      if (spin) spin.remove();
+      s.classList.remove("busy");
+      if (finalText !== undefined) s.querySelector(".t").textContent = finalText;
+    },
+  };
 }
 function workMsg(speaker, text) {
   workShow();
@@ -733,7 +861,15 @@ async function postSSE(url, body, onEvent) {
 /* ---------- command implementations ---------- */
 
 async function cmdIngest() {
-  workSys("#ingest — reading reports, synthesizing the agenda (a minute or two)…");
+  const busy = workBusy("#ingest — reading reports, synthesizing the agenda (a minute or two)…");
+  try {
+    await ingestInner();
+  } finally {
+    busy.done();
+  }
+}
+
+async function ingestInner() {
   await postSSE("/api/command/ingest", {}, (e) => {
     if (e.line) workSys(e.line);
     if (e.done) {
@@ -769,20 +905,24 @@ async function cmdAgent(dept) {
 async function cmdCollab(deptsRaw, task) {
   const departments = deptsRaw.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
   workMsg("CEO", `#collab ${departments.join(", ")} — ${task}`);
-  workSys("convening the departments on a joint deliverable…");
+  const busy = workBusy("convening the departments on a joint deliverable…");
   let synthTx = null;
-  await postSSE("/api/collaborate", { departments, task }, (e) => {
-    if (e.line) workSys(e.line);
-    if (e.department) workMsg(e.department, e.text);
-    if (e.delta) {
-      if (!synthTx) synthTx = workMsg("brain", "");
-      synthTx.textContent += e.delta;
-    }
-    if (e.done) {
-      workOk(`✓ joint deliverable saved to HQ: ${e.path}`);
-      loadDepartments();
-    }
-  });
+  try {
+    await postSSE("/api/collaborate", { departments, task }, (e) => {
+      if (e.line) workSys(e.line);
+      if (e.department) workMsg(e.department, e.text);
+      if (e.delta) {
+        if (!synthTx) synthTx = workMsg("brain", "");
+        synthTx.textContent += e.delta;
+      }
+      if (e.done) {
+        workOk(`✓ joint deliverable saved to HQ: ${e.path}`);
+        loadDepartments();
+      }
+    });
+  } finally {
+    busy.done();
+  }
 }
 
 async function cmdConsult(dept, message) {
@@ -820,11 +960,16 @@ async function cmdAsk(question) {
 
 async function cmdDirective(dept, changes) {
   workMsg("CEO", `#directive ${dept} — ${changes}`);
-  workSys("drafting the revised directive…");
-  const response = await fetch("/api/command/directive", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ department: dept, changes }),
-  });
+  const busy = workBusy("drafting the revised directive…");
+  let response;
+  try {
+    response = await fetch("/api/command/directive", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ department: dept, changes }),
+    });
+  } finally {
+    busy.done();
+  }
   if (!response.ok) {
     workSys(`error: ${(await response.json()).detail || response.status}`);
     return;
@@ -862,8 +1007,11 @@ async function cmdMeeting() {
     return;
   }
   const data = await response.json();
-  workSys(`#meeting — board meeting ${data.week} · ${data.items.length} item(s).`);
-  if (data.briefing) {
+  const ruled = data.items.filter((i) => i.ruled).length;
+  workSys(data.resumed
+    ? `#meeting — resuming the in-progress ${data.week} meeting · ${ruled}/${data.items.length} item(s) already ruled.`
+    : `#meeting — board meeting ${data.week} · ${data.items.length} item(s).`);
+  if (data.briefing && !data.resumed) {
     workShow();
     const card = document.createElement("div");
     card.className = "card";
@@ -873,8 +1021,17 @@ async function cmdMeeting() {
     card.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   meetingItems = data.items;
-  meetingIndex = 0;
-  workChipSet("read the briefing, then take the first item", [
+  const firstUnruled = data.items.findIndex((i) => !i.ruled);
+  if (firstUnruled === -1) {
+    // Every item already ruled — the only thing left is the close.
+    meetingIndex = data.items.length;
+    workChipSet("all items already ruled — close the meeting to write the records", [
+      { label: "Close meeting", primary: true, go: () => meetingClose({}) },
+    ]);
+    return;
+  }
+  meetingIndex = firstUnruled;
+  workChipSet(data.resumed ? "picking up at the first unruled item" : "read the briefing, then take the first item", [
     { label: "Begin rulings", primary: true, go: meetingShowItem },
   ]);
 }
@@ -927,13 +1084,18 @@ async function meetingDiscuss(text) {
 }
 
 async function meetingClose(ratifications) {
-  workSys("meeting over — writing minutes, decisions, and directive updates…");
+  const busy = workBusy("meeting over — writing minutes, decisions, and directive updates…");
   workChipSet("", []);
-  const response = await fetch("/api/meeting/close", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ratifications }),
-  });
-  const data = await response.json();
+  let data;
+  try {
+    const response = await fetch("/api/meeting/close", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ratifications }),
+    });
+    data = await response.json();
+  } finally {
+    busy.done();
+  }
 
   if (data.needs_ratification) {
     const pending = data.needs_ratification[0];
@@ -1105,6 +1267,7 @@ brCheckStatus();
 renderQuickChips("home");
 loadOverview();
 loadDepartments();
+loadProducts();
 loadBoardroom();
 loadCommands();
 loadQuickActions();

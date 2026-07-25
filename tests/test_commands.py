@@ -167,13 +167,25 @@ class TestMeetingFlow:
         assert "is this risky?" in synth_call.user_message
         assert "sidebar counsel" in synth_call.user_message
 
-    def test_double_start_409s(self, env, hq):
+    def test_double_start_resumes_with_rulings_intact(self, env, hq):
+        # Regression (2026-07-24): a browser reload lost the client-side
+        # meeting state and the old 409 left the CEO with no way back in.
+        # A second start must RESUME the live session, rulings intact.
         hq.write_agenda(hq.current_week_key(), AGENDA)
         client, _ = make_client(env, [])
-        self._start(client)
-        assert client.post("/api/meeting/start").status_code == 409
+        first = self._start(client)
+        assert first["resumed"] is False
+        client.post("/api/meeting/ruling", json={"item_id": 0, "action": "approve"})
+
+        second = self._start(client)
+        assert second["resumed"] is True
+        assert [i["title"] for i in second["items"]] == [i["title"] for i in first["items"]]
+        assert second["items"][0]["ruled"] is True
+        assert second["items"][0]["ruling"] == "approve"
+        assert second["items"][1]["ruled"] is False
+
         assert client.post("/api/meeting/abandon").json() == {"abandoned": True}
-        assert client.post("/api/meeting/start").status_code == 200
+        assert client.post("/api/meeting/start").json()["resumed"] is False
 
 
 class TestConsult:

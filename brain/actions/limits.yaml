@@ -8,10 +8,31 @@
 # Seeded from the action-layer spec §4. All agents are dormant in Phase 1 —
 # nothing here is live until its phase and its capability ladder say so.
 
-storefront:
-  allowed_actions: [shopify.update_listing_copy, shopify.update_listing_images]
+creative:
+  # Creative owns designs and, by extension, their Printful product form.
+  # Product creation places no order and no money; it's an unpublished,
+  # deletable sync product. Still governed: capability ladder defaults to
+  # dry-run, CEO approves each live run for now. (Attribution for the first
+  # connector test; a dedicated product/storefront owner is a later org call.)
+  allowed_actions: [printful.create_product]
   bounds:
-    shopify.set_price: { max_change_pct: 10, requires: escalation }   # not allowed yet
+    max_actions_per_day: 5
+
+storefront:
+  # Storefront owns live-product upkeep: descriptions/SEO across Printful and
+  # Etsy. Copy edits are allowed (dry-run by default, earns supervised/auto).
+  # Every price action is deliberately ABSENT from allowed_actions, so any
+  # price change the agent proposes is rejected-and-escalated to the CEO —
+  # money never leaves the CEO's hands. The bounds below are belt-and-suspenders.
+  allowed_actions:
+    - shopify.update_listing_copy
+    - shopify.update_listing_images
+    - printful.update_product
+    - etsy.update_listing
+  bounds:
+    shopify.set_price: { max_change_pct: 10, requires: escalation }        # not allowed
+    printful.set_retail_price: { requires: escalation }                    # not allowed
+    etsy.set_price: { requires: escalation }                               # not allowed
     max_actions_per_day: 10
 
 paid_ads:

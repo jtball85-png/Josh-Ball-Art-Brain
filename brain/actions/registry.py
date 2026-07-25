@@ -39,7 +39,48 @@ REGISTRY: dict[str, ActionType] = {
         ActionType(
             name="printful.create_product",
             connector="printful",
-            params={"template": "str", "variants": "list"},
+            params={
+                "product_id": "int",       # catalog product (e.g. 71 = Bella+Canvas 3001)
+                "variant_ids": "list",     # catalog variant ids (color×size)
+                "files": "list",           # [{"placement": "front", "url": <public URL>}, ...]
+                                           # one or more print files (e.g. front + sleeve_left)
+                "product_name": "str",
+                "external_id": "str",      # deterministic id for idempotency + rollback
+            },
+            # Snapshotting the external_id is what makes rollback possible:
+            # restore() deletes @external_id (create can't know its own new
+            # product id at pre-execute snapshot time).
+            snapshot_params=("external_id",),
+        ),
+        ActionType(
+            name="printful.update_product",
+            connector="printful",
+            # Copy-only edit (product name). Reversible: snapshot captures the
+            # current name, restore re-applies it. Price lives in its own
+            # action so money stays a separate, escalating decision.
+            params={"external_id": "str", "name": "str"},
+            snapshot_params=("external_id",),
+        ),
+        ActionType(
+            name="printful.set_retail_price",
+            connector="printful",
+            # Money. Not in any agent's allowed_actions -> always escalates to
+            # the CEO. Snapshot captures every variant's prior price for undo.
+            params={"external_id": "str", "retail_price": "float"},
+            snapshot_params=("external_id",),
+        ),
+        ActionType(
+            name="etsy.update_listing",
+            connector="etsy",
+            params={"listing_id": "str", "title": "str", "description": "str", "tags": "list"},
+            snapshot_params=("listing_id",),
+        ),
+        ActionType(
+            name="etsy.set_price",
+            connector="etsy",
+            # Money -> escalates, like printful.set_retail_price.
+            params={"listing_id": "str", "price": "float"},
+            snapshot_params=("listing_id",),
         ),
         ActionType(
             name="meta.adjust_budget",

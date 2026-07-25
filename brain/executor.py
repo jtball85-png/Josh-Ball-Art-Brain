@@ -98,7 +98,7 @@ class Executor:
             record = self._record(action_id, intent, mode="", result=ActionResult.REJECTED,
                                   reasons=reasons)
             self.hq.append_action(record)
-            self._escalate_rejection(intent, reasons)
+            self._escalate_rejection(action_id, intent, reasons)
             return record
 
         action_type = self.registry[intent.action_type]
@@ -111,7 +111,7 @@ class Executor:
             record = self._record(action_id, intent, mode=mode.value,
                                   result=ActionResult.REJECTED, reasons=reasons)
             self.hq.append_action(record)
-            self._escalate_rejection(intent, reasons)
+            self._escalate_rejection(action_id, intent, reasons)
             return record
 
         # Bounds (step 7) come after mode resolution: connector-dependent
@@ -123,7 +123,7 @@ class Executor:
             record = self._record(action_id, intent, mode=mode.value,
                                   result=ActionResult.REJECTED, reasons=reasons)
             self.hq.append_action(record)
-            self._escalate_rejection(intent, reasons)
+            self._escalate_rejection(action_id, intent, reasons)
             return record
 
         if mode == ActionMode.DRY_RUN:
@@ -135,7 +135,7 @@ class Executor:
 
     def _execute_live(self, action_id: str, intent: ActionIntent,
                       action_type: ActionType, mode: ActionMode,
-                      connector: Connector) -> ActionRecord:
+                      connector: Connector, note: str = "") -> ActionRecord:
         # Evidence before action: a crash mid-call must leave a trace.
         self.hq.append_action(
             self._record(action_id, intent, mode=mode.value, result=ActionResult.EXECUTING)
@@ -152,19 +152,20 @@ class Executor:
                                       result=ActionResult.REJECTED,
                                       reasons=[f"pre-action snapshot failed: {e} — refusing to execute"])
                 self.hq.append_action(record)
-                self._escalate_rejection(intent, record.reasons)
+                self._escalate_rejection(action_id, intent, record.reasons)
                 return record
 
         try:
             connector.execute(action_type, intent.params)
         except Exception as e:
+            reasons = ([note] if note else []) + [str(e)]
             record = self._record(action_id, intent, mode=mode.value, result=ActionResult.FAILED,
-                                  snapshot_ref=snapshot_ref, reasons=[str(e)])
+                                  snapshot_ref=snapshot_ref, reasons=reasons)
             self.hq.append_action(record)
             return record
 
         record = self._record(action_id, intent, mode=mode.value, result=ActionResult.EXECUTED,
-                              snapshot_ref=snapshot_ref)
+                              snapshot_ref=snapshot_ref, reasons=[note] if note else None)
         self.hq.append_action(record)
         return record
 
@@ -235,7 +236,58 @@ class Executor:
 
     # ------------------------------------------------------------------
 
-    def _validate(self, intent: ActionIntent) -> list[str]:
+    def approve_action(self, action_id: str, escalation_id: str = "") -> ActionRecord:
+        """CEO-approval override: replay a specific already-rejected action
+        for real. This is the only way a money action (or anything else kept
+        out of an agent's allowed_actions) ever executes — proposing it
+        was not enough, an explicit CEO approval of THIS action id is.
+
+        Every other safety check still runs (see `ignore_allowlist` in
+        `_validate`): a hard-denied action, a malformed proposal, or a
+        suspended agent stays rejected no matter what. Bounds (weekly caps,
+        max-change %) are skipped deliberately — those constrain an agent's
+        own autonomous proposals, not a CEO's explicit sign-off."""
+        records = {r.id: r for r in self.hq.read_actions()}
+        original = records.get(action_id)
+        if original is None:
+            raise ValueError(f"No action {action_id!r} in the log.")
+        if original.result != ActionResult.REJECTED:
+            raise ValueError(f"{action_id} is {original.result!r}, not rejected — nothing to approve.")
+
+        action_type = self.registry.get(original.action_type)
+        if action_type is None:
+            raise ValueError(f"{action_id} has unregistered type {original.action_type!r}.")
+
+        intent = ActionIntent(
+            agent=original.agent,
+            action_type=original.action_type,
+            params=original.params,
+            rationale=(
+                f"CEO-approved override of {action_id}"
+                + (f" (escalation {escalation_id})" if escalation_id else "")
+            ),
+            directive_version=original.directive_version,
+        )
+
+        reasons = self._validate(intent, ignore_allowlist=True)
+        if reasons:
+            raise ValueError(f"cannot approve {action_id}: {'; '.join(reasons)}")
+
+        connector = self.connectors.get(action_type.connector)
+        if connector is None:
+            raise ValueError(f"no live connector installed for {action_type.connector!r}")
+
+        new_action_id = self.hq.next_action_id(as_of=self.now_fn().date())
+        note = (
+            f"CEO-approved override of {action_id}"
+            + (f" (escalation {escalation_id})" if escalation_id else "")
+        )
+        return self._execute_live(new_action_id, intent, action_type, ActionMode.SUPERVISED,
+                                  connector, note=note)
+
+    # ------------------------------------------------------------------
+
+    def _validate(self, intent: ActionIntent, ignore_allowlist: bool = False) -> list[str]:
         # 1. Kill switch — unset means enabled (dry-run default keeps that safe).
         raw = str(self.env.get("EXECUTOR_ENABLED", "true")).strip().lower()
         if raw in ("false", "0", "no"):
@@ -273,9 +325,15 @@ class Executor:
 
         # 6. Allowlist. (Bounds — step 7 — run in submit() after mode
         # resolution, since some checks are connector-dependent.)
+        # `ignore_allowlist` exists ONLY for approve_action(): a CEO
+        # approving a specific already-escalated action IS the allowlist
+        # check being satisfied by hand. Every other step above still runs
+        # unconditionally, so approval can never bypass a hard denial, a
+        # suspended agent, a malformed param, or the kill switch.
         agent_limits = self.limits.get(intent.agent)
-        if agent_limits is None or intent.action_type not in agent_limits.allowed_actions:
-            return [f"{intent.action_type} is not in {intent.agent}'s allowed_actions"]
+        if not ignore_allowlist:
+            if agent_limits is None or intent.action_type not in agent_limits.allowed_actions:
+                return [f"{intent.action_type} is not in {intent.agent}'s allowed_actions"]
 
         return []
 
@@ -369,7 +427,7 @@ class Executor:
             directive_version=intent.directive_version,
         )
 
-    def _escalate_rejection(self, intent: ActionIntent, reasons: list[str]) -> None:
+    def _escalate_rejection(self, action_id: str, intent: ActionIntent, reasons: list[str]) -> None:
         self.hq.append_escalation(
             EscalationItem(
                 id="",
@@ -380,5 +438,6 @@ class Executor:
                     f"Action rejected: {intent.action_type} — {'; '.join(reasons)}. "
                     f"Agent rationale: {intent.rationale or '(none given)'}"
                 ),
+                action_ref=action_id,
             )
         )
