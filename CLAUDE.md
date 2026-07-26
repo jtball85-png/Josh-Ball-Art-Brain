@@ -87,6 +87,13 @@ cwd (BRAIN_ROOT env var or upward walk for `hq/charter/company.md`).
 
 - Every bug found becomes a regression test (`tests/`, FakeLLM/FakeConnector
   doubles — tests never call the API).
+- When code implements a concrete requirement stated in a garage research
+  file or the decision log, encode that requirement as a test assertion
+  *at build time* — not only after someone later catches a mismatch — and
+  leave a one-line comment in the code pointing back to the source file.
+  (Found the hard way: `garage/prints/derive_prints.py` was built without
+  the per-size-crop requirement its own same-day research file had already
+  specified, and the gap sat unnoticed until the CEO caught it in review.)
 - Session objects (BoardroomSession, MeetingSession) split LLM-call
   preparation from HQ writes (`prepare_* / commit_*`) so dashboard
   ratification round-trips never double-append records.
