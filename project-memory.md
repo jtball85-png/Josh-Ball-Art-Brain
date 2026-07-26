@@ -23,6 +23,85 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
+## Session — 2026-07-26 (checkpoint)
+
+**Focus:** Committed the prior session's pending print-pipeline fix (with CEO
+go-ahead), then a full critical UX/brand/conversion audit of joshballart.com,
+then built a mid-session `/checkpoint` command.
+
+**Decisions made:**
+- Committed the 2026-07-25 (2) print-derivation crop/border fix and "Steve"
+  master (`e79ff04`) — CEO approved committing during this session's
+  `/start-of-day`, since it had been left pending CEO go-ahead beforehand.
+- Installed the CEO-requested `website-audit-skill` (github.com/appariciojunior/website-audit-skill)
+  at `.claude/skills/website-audit/` — fetched via raw file reads + the
+  GitHub API tree listing, not `git clone` (CEO specifically asked not to
+  use git clone), reviewed for safety before writing. Two adaptations noted
+  in the files: output path → `garage/research/` (not the original's
+  `/mnt/skills/user/...`, which is a different Claude surface), and the
+  discovery-tool reference genericized (Claude Code has no `ask_user_input_v0`
+  tool).
+- Scoped the audit crawl per CEO choice: deep-dive every one of the ~13
+  original art/print/drinkware products individually; sample ~8-10 of the
+  ~90 Jacquard craft-supply resale SKUs to characterize the shared template
+  once rather than repeating findings 90 times. Also per CEO choice: no
+  browser/screenshot tool exists in this environment (confirmed via
+  ToolSearch), so visual/breakpoint/console-error findings are explicitly
+  labeled as structural inference, never stated as directly observed.
+- Built `.claude/commands/checkpoint.md` — a stripped-down `/end-of-day` for
+  mid-session use before `/clear`, not just literal end-of-day. Uses the
+  same command mechanism as `/end-of-day`/`/start-of-day` (not a `SKILL.md`
+  skill folder). Confirmed (no tool exists for it) that a skill/command
+  cannot itself trigger `/clear` — it's a client-side-only command — so the
+  command ends by telling the CEO to run it themselves.
+
+**Problems solved:**
+- Mid-task, mistakenly began executing (installing the skill, running live
+  site checks, dispatching research agents) after a CEO message that was
+  misread as approval to exit plan mode — plan mode was actually still
+  active. Caught via a system reminder, stopped, updated the plan file
+  transparently with what had already happened, and got real approval via
+  `ExitPlanMode` before finishing the synthesis write. Flagged to the CEO
+  directly rather than quietly proceeding.
+- One research subagent (of three) initially inherited stale "plan mode
+  active" framing from the parent session and wrote a plan file instead of
+  executing — resumed it via `SendMessage` with an explicit correction
+  ("plan mode is not active for you") rather than respawning from scratch.
+- Found two `~/.claude/commands/` files (`save-session-memory.md`,
+  `end-session.md`) that looked like they might already cover the
+  checkpoint need, but they're hardcoded to a different, unrelated project
+  ("GC-PM-APP" / "Captain's Log") with absolute paths to that project's
+  memory folder — confirmed unusable here before building a fresh,
+  project-local command instead.
+
+**Left unresolved:**
+- The audit report (`garage/research/joshballart-website-audit-2026-07-26.md`)
+  is written but not yet reviewed by the CEO — added to `project-context.md`
+  What's next, waiting on desktop-computer access (vault passcodes).
+- No true visual/browser-based pass has been done on joshballart.com — the
+  audit explicitly flags this as a gap for a future session once a
+  browser/screenshot-capable tool is available.
+- `/checkpoint` was just created this session and hadn't appeared yet in
+  VS Code's slash-command autocomplete cache when first tried (worked fine
+  invoked directly via the Skill tool) — unclear if a VS Code/extension
+  reload is needed for the `/` autocomplete list specifically, or if it
+  would have appeared on its own; not confirmed either way.
+
+**Files changed this session:**
+```
+Committed (e79ff04, from prior session, approved this session):
+ 15 files changed, 371 insertions(+), 30 deletions(-)
+ (CLAUDE.md, derive_prints.py, tests/test_derive_prints.py, 2 new garage/research
+ files, garage/prints/candidates/steve.tif, garage/prints/ready/steve/*,
+ regenerated sample-photo proofs/ready outputs)
+
+New this session (uncommitted at checkpoint time):
+ .claude/commands/checkpoint.md          (new)
+ .claude/skills/website-audit/           (new — SKILL.md, checklist.md, README.md)
+ garage/research/joshballart-website-audit-2026-07-26.md  (new — full audit)
+ project-context.md                      (modified — What's next entry added)
+```
+
 ## Session — 2026-07-25 (2)
 
 **Focus:** CEO gave a real photo file (`E:\Products\Photography\DSC09438 - Edit

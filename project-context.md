@@ -1,5 +1,5 @@
 # Project: Minivan Dads — The Brain (COO)
-Last updated: 2026-07-25 by Claude Code
+Last updated: 2026-07-26 by Claude Code
 
 ## What this project is
 Minivan Dads Inc. is a print-on-demand apparel brand (Printful catalog, "Old Guys Rule" playbook) targeting minivan-driving dads, aiming for $200k+/yr net income or a seven-figure exit. This project is "The Brain" — Phase 1 of a multi-agent company system: a CLI orchestrator (COO) plus HQ, a git-diffable Markdown filesystem that is the company's single source of truth. Future department agents (Market Intel, Creative, Content, Product, Storefront, Customer, Paid Ads, Finance) will read directives from and write reports to HQ in later phases — not built yet, but the Phase 1 design must not box them out.
@@ -46,14 +46,18 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: 4370af6 — End of day 2026-07-25 — context and memory updated
-In progress: print-derivation pipeline crop/border fix (CLAUDE.md,
-garage/prints/derive_prints.py, tests/test_derive_prints.py, two new
-garage/research files, regenerated ready/proof outputs) — uncommitted,
-CEO hasn't yet said to commit
+Last commit: e79ff04 — Fix print-derivation crop/border drift, run first
+real master through pipeline (CEO-approved commit of the prior session's
+pending work)
+In progress (uncommitted): website-audit skill installed
+(.claude/skills/website-audit/), full audit report written
+(garage/research/joshballart-website-audit-2026-07-26.md), new
+/checkpoint command (.claude/commands/checkpoint.md), project-context.md
+What's next entry
 Branch: main
 
 ## What's next
+- [ ] CEO review owed: `garage/research/joshballart-website-audit-2026-07-26.md` (full site UX/brand/conversion audit) — once back on the desktop computer with the vault passcodes
 - [ ] CEO can't reach the desktop computer for a few days — once there: `bw login` + unlock, run `garage/secrets/push_env_to_vault.py` to seed the vault with the real Shopify/Printful secrets (this laptop only pushed a smoke-test `ANTHROPIC_API_KEY`-only version); then back on the laptop, `pull_env_from_vault.py`, then approve ESC-016 (Enamel Cup $14.00→$19.50, ACT-2026-W30-0014) from the dashboard to actually execute it live
 - [ ] Mug pricing (Bodysurf Fin Mug, Logo Mug) still unresolved — `shopify.set_price` can only set one flat price per product, which would collapse their existing 11/15/20oz price ladder; needs either a per-variant pricing capability or a CEO decision to accept the flattening
 - [ ] CEO-stated 2026-07-23: revisit the board cycle plan next session — the W30 agenda (4 [CEO REQUIRED] decisions) is built but no meeting held; then the brand-redefinition #boardroom, which gates the prints/drinkware naming/description/SEO/pricing pass
@@ -110,6 +114,7 @@ Browser tasks, desktop automation, file management.
 Use project-context-updater.html on Cowork-heavy days.
 
 ## Change log
+- 2026-07-26 — Committed the CEO-approved print-pipeline fix from the prior session (e79ff04); installed the CEO-requested website-audit-skill (via raw file fetch, not git clone, per CEO instruction) at .claude/skills/website-audit/; ran a full critical UX/brand/conversion audit of joshballart.com across homepage/nav/collections/policies, all 13 original art/drinkware products, a sample of the Jacquard supply catalog, static pages, and blog — written to garage/research/joshballart-website-audit-2026-07-26.md; built a new /checkpoint command for mid-session saves before /clear — Source: Claude Code
 - 2026-07-25 (2) — Ran a real photo ("Steve") through the print-derivation pipeline for the first time and found/fixed a real bug: it padded instead of cropping, so borders didn't match on every edge — rebuilt to crop each size to its own aspect ratio first, then scale uniformly, closing a gap between the 2026-07-21 research and the code that had gone unnoticed; landed on a final border spec after validating against real standard-mat mockups and FinerWorks' own ordering docs (always checkout "borderless"); planned the first physical sample-print order (16x20 + three 8x10 papers). All uncommitted, pending CEO go-ahead — Source: Claude Code
 - 2026-07-25 — Pulled and merged the desktop's Josh Ball Art pivot session (real Printful/Shopify connectors, product catalog, approve-and-execute pricing); updated `origin` remote to the renamed GitHub repo; hardened `/start-of-day` (pulls first) and `/end-of-day` (pushes after commit) so git sync is enforced, not manual (d1f3903); proposed a real live-test price action for the Enamel Cup, correctly rejected-and-escalated as ACT-2026-W30-0014/ESC-016 (8a9c619); built and verified a Bitwarden-vault-based `.env` sync (`garage/secrets/`) to fix the cross-machine secrets gap that blocked approving it (7e90e8f) — Source: Claude Code
 - 2026-07-24 — Board can propose product/pricing changes including price; CEO approval now executes the change for real instead of requiring a manual re-apply — `Executor.approve_action()` (allowlist-only bypass, hard denials/bad params/suspended agents still block it), `EscalationItem.action_ref`, `shopify.set_price` implemented for real (was registered but deliberately unimplemented), dashboard `/api/escalations/{id}/approve|deny` + console UI, charter + storefront directive text updated (a173a63) — Source: Claude Code
