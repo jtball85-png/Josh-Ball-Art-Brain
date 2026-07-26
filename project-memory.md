@@ -23,6 +23,108 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
+## Session — 2026-07-25 (2)
+
+**Focus:** CEO gave a real photo file (`E:\Products\Photography\DSC09438 - Edit
+2 Steve Looking\DSC09438-Edit-2 Vert Master Test.tif`) to test-drive the
+garage print-derivation pipeline built 2026-07-21, which had never been run
+against a real master before. That surfaced a real bug in the pipeline's
+border/crop logic, which took most of the session to properly diagnose and
+fix, informed by the CEO's own mockups against real standard frame+mat
+products and FinerWorks' own ordering mechanics.
+
+**Decisions made:**
+- Renamed the pass "Steve" and established two-stage master storage:
+  `garage/prints/candidates/` holds a master as soon as it clears the
+  pipeline; `garage/prints/masters/` is promotion-only, moved there by hand
+  once a real physical print is confirmed good. `derive_prints.py` now
+  scans both.
+- Found and fixed a real drift bug: the pipeline shrank the whole photo to
+  fit inside each sheet without ever cropping it, so left/right and
+  top/bottom borders came out different widths whenever the photo's aspect
+  ratio didn't match the sheet's — the CEO's own 2026-07-21 research had
+  already specified "must derive per-size crops, not one master crop" and
+  the code never did that. Fixed by cropping each size to its own exact
+  ratio first (center-anchored, never stretching), then scaling uniformly.
+  Added a standing CLAUDE.md convention (test-encode a research file's
+  concrete requirement at build time, plus a code comment pointing back to
+  the source doc) specifically so this kind of gap stops recurring silently.
+- Iterated the border spec twice. First pass (0.5"/1.0"+1.25"b) was sized
+  off generic no-mat fine-art advice. The CEO then mocked up the actual
+  prints behind real standard pre-cut mats (11x14 frame → 7.5x9.5 opening
+  for 8x10; 16x20 → 10.5x13.5 for 11x14; 20x24 → 15.5x19.5 for 16x20 — a
+  flat ~0.25" overlap regardless of frame size) and found way too much
+  border peeking out on 11x14/16x20. Final spec: 8x10 = 0.3" all sides;
+  11x14 = 0.5" left/right/top, 0.625" bottom; 16x20 = 1.0" left/right/top,
+  1.125" bottom (light bottom-weighted-mat touch kept on the two larger
+  sizes only, per CEO preference). Full reasoning in
+  `garage/research/print-border-mat-compatibility-2026-07-25.md`.
+- FinerWorks ordering decision: always select "borderless" at checkout —
+  our files already have the margin embedded; FinerWorks' own "border"
+  option instead adds margin *outward*, growing the cut sheet past the
+  nominal size (their example: 20x16 + 0.5" border → 21x17 sheet).
+- Paper/sample-order plan: one 16x20 on Hahnemühle Photo Rag Baryta, plus
+  one 8x10 on each of three papers the store will offer (Photo Rag Baryta,
+  Photo Rag, Moab Exhibition Luster 300) — all four using the actual
+  `garage/prints/ready/steve/` files, not separate test images.
+
+**Problems solved:**
+- Repeatedly confirmed the crop-then-uniform-scale approach never
+  stretches/warps the image — crop to the target ratio first (removes
+  pixels only, keeps proportions), then one uniform scale factor fills the
+  content area exactly.
+- Corrected a DPI misconception: re-exporting at 600 DPI instead of 300 in
+  Photoshop with "no resample" only changes a print-size metadata tag, not
+  actual pixel count — no quality benefit, and irrelevant to the pipeline
+  anyway since it computes effective DPI from real pixel count, not the
+  embedded tag.
+- Corrected a CEO assumption: the FinerWorks-Shopify auto-fulfillment
+  integration was researched as *possible* (FinerWorks does offer a
+  Shopify fulfillment app + API) but was never actually built — checked
+  `brain/connectors/` directly, no `finerworks.py` exists. All current
+  FinerWorks ordering, including the upcoming sample order, is manual.
+
+**Approaches discussed:**
+- Two competing "how much border" conventions exist industry-wide: generic
+  no-mat fine-art margins (1"–2" on larger sizes, for prints framed with no
+  separate mat) vs. thin mat-compatible margins (FinerWorks' own
+  recommendation of 0.5"/1" for matted prints; Mpix's flat 0.25"–0.5"
+  regardless of size). Settled on the latter since these prints will
+  actually be sold matted.
+- 16x20 in the sample order doubles as the real-world check on the
+  "acceptable" (not "excellent") 218 DPI verdict for Steve at that size —
+  the physical print is the actual test of whether 200 DPI is good enough
+  in person, not just a formula-based judgment call.
+
+**Left unresolved:**
+- The physical FinerWorks sample order (16x20 Baryta + three 8x10 papers)
+  has not been placed yet — CEO to do manually.
+- FinerWorks Shopify connector doesn't exist — flagged as a real but
+  not-yet-started future build, once paper/border testing concludes.
+- Today's code/file changes are uncommitted — CEO was asked twice whether
+  to commit and didn't confirm; nothing pushed this session.
+- The pre-existing `project-context.md` "What's next" list (mug pricing,
+  W30 board meeting, Etsy shop, etc.) was untouched this session.
+
+**Files changed this session (uncommitted at session end):**
+```
+Modified:
+ CLAUDE.md                                     |   7 ++
+ garage/prints/derive_prints.py                | 104 ++++++++++++++++++++--------
+ garage/prints/proofs/sample-photo-proof.jpg   | (regenerated)
+ garage/prints/ready/sample-photo/11x14.jpg    | (regenerated)
+ garage/prints/ready/sample-photo/16x20.jpg    | (regenerated)
+ garage/prints/ready/sample-photo/8x10.jpg     | (regenerated)
+
+New (untracked):
+ garage/prints/candidates/steve.tif
+ garage/prints/ready/steve/{8x10,11x14,16x20}.jpg
+ garage/prints/proofs/steve-proof.jpg
+ garage/research/finerworks-paper-recommendation-2026-07-25.md
+ garage/research/print-border-mat-compatibility-2026-07-25.md
+ tests/test_derive_prints.py (10 new tests, 352 total passing)
+```
+
 ## Session — 2026-07-25
 
 **Focus:** CEO reported a big overhaul done on the other (desktop) computer and

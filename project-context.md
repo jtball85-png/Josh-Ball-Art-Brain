@@ -46,8 +46,11 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: 7e90e8f — Add Bitwarden-based sync for cross-machine API keys
-In progress: none
+Last commit: 4370af6 — End of day 2026-07-25 — context and memory updated
+In progress: print-derivation pipeline crop/border fix (CLAUDE.md,
+garage/prints/derive_prints.py, tests/test_derive_prints.py, two new
+garage/research files, regenerated ready/proof outputs) — uncommitted,
+CEO hasn't yet said to commit
 Branch: main
 
 ## What's next
@@ -107,6 +110,7 @@ Browser tasks, desktop automation, file management.
 Use project-context-updater.html on Cowork-heavy days.
 
 ## Change log
+- 2026-07-25 (2) — Ran a real photo ("Steve") through the print-derivation pipeline for the first time and found/fixed a real bug: it padded instead of cropping, so borders didn't match on every edge — rebuilt to crop each size to its own aspect ratio first, then scale uniformly, closing a gap between the 2026-07-21 research and the code that had gone unnoticed; landed on a final border spec after validating against real standard-mat mockups and FinerWorks' own ordering docs (always checkout "borderless"); planned the first physical sample-print order (16x20 + three 8x10 papers). All uncommitted, pending CEO go-ahead — Source: Claude Code
 - 2026-07-25 — Pulled and merged the desktop's Josh Ball Art pivot session (real Printful/Shopify connectors, product catalog, approve-and-execute pricing); updated `origin` remote to the renamed GitHub repo; hardened `/start-of-day` (pulls first) and `/end-of-day` (pushes after commit) so git sync is enforced, not manual (d1f3903); proposed a real live-test price action for the Enamel Cup, correctly rejected-and-escalated as ACT-2026-W30-0014/ESC-016 (8a9c619); built and verified a Bitwarden-vault-based `.env` sync (`garage/secrets/`) to fix the cross-machine secrets gap that blocked approving it (7e90e8f) — Source: Claude Code
 - 2026-07-24 — Board can propose product/pricing changes including price; CEO approval now executes the change for real instead of requiring a manual re-apply — `Executor.approve_action()` (allowlist-only bypass, hard denials/bad params/suspended agents still block it), `EscalationItem.action_ref`, `shopify.set_price` implemented for real (was registered but deliberately unimplemented), dashboard `/api/escalations/{id}/approve|deny` + console UI, charter + storefront directive text updated (a173a63) — Source: Claude Code
 - 2026-07-23 — Managed design-to-POD asset system built (real Bodysurf Fin SVG master curated, drive manifest + junk cleanup, spec-driven push driver, dry-run rehearsed) (ec0369b, ef81b39); JBA Printful token wired — 7 live products + 11 saved templates read, manifest corrected (beanie/poster/can-cooler) (4d8268c, 87d00db); live-store margin audit vs 30% floor — 97/189 variants below, recs escalated (739894e); Shopify Admin API token captured via local OAuth exchange, GraphQL connector built with governed copy/image actions, full 107-product store synced, first dry-run listing edit logged (b5d8de0); silent empty-output bug found and fixed (LLMTruncated + caps raised + regression tests) and the W30 board cycle run — agenda with 4 [CEO REQUIRED] decisions awaiting the meeting (7482c89) — Source: Claude Code
