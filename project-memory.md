@@ -23,7 +23,7 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
-## Session — 2026-07-27
+## Session — 2026-07-27 (laptop — print-derivation resolution-honesty fix)
 
 **Focus:** Reviewed current print pipeline + site state, traced the decision
 history behind selling physical prints, then diagnosed and fixed a real
@@ -97,6 +97,59 @@ as of this entry):**
  tests/test_derive_prints.py          |  54 ++++++++++++++++++++++--
  6 files changed, 182 insertions(+), 23 deletions(-)
 ```
+
+## Session — 2026-07-27 (desktop — Bitwarden secrets push)
+
+**Focus:** CEO reported the weekend's laptop work and a real cross-machine
+API-key problem; asked to move all real keys (this desktop's Shopify,
+Printful, Anthropic credentials) into the Bitwarden vault built over the
+weekend, so any computer has full access after a `git pull`.
+
+**Decisions made:**
+- Pushed this desktop's real secrets into the existing "JBA Brain .env"
+  Bitwarden vault item — this is the computer that actually holds them; the
+  laptop's weekend push was only a smoke test (`ANTHROPIC_API_KEY` alone).
+- Locked the vault immediately after the push. The CEO's Bitwarden session
+  key ended up pasted into the chat (not intentionally — the CEO didn't
+  recognize the terminal output and sent it over for help); treated that as
+  a real exposure and invalidated the session key rather than leaving it live.
+
+**Problems solved:**
+- Bitwarden CLI (`bw`) wasn't installed on this desktop at all (only the
+  laptop had it from the weekend) — installed via `winget install --id
+  Bitwarden.CLI -e`. Winget's PATH update doesn't reach an already-open
+  shell, so a fresh terminal (or a manual PATH refresh) is required
+  immediately after install — this bit both the CEO's terminal and mine.
+- Verified all 9 expected keys (ANTHROPIC_API_KEY, PRINTFUL_API_KEY[_MVD],
+  PRINTFUL_STORE_ID[_MVD], SHOPIFY_CLIENT_ID/SECRET/ACCESS_TOKEN/STORE_DOMAIN)
+  landed in the vault by listing key NAMES only (never printing values)
+  before locking it.
+- `/checkpoint` (built on the laptop last weekend per its own memory entry)
+  turned out to have never been committed — it only ever existed locally on
+  the laptop, so it wasn't present here. Substituted `/end-of-day` instead,
+  since it's the actually-committed command that accomplishes the same
+  "save state and push" goal.
+
+**Approaches discussed:**
+- Confirmed running two Claude Code sessions at once (this desktop + a new
+  laptop session) is safe: each is an independent local clone of the same
+  GitHub repo with no shared server/live state — the only coordination
+  needed is the normal pull-before-work / push-after-work discipline that
+  `/start-of-day` and `/end-of-day` already enforce.
+- Clarified that "full access from the laptop" needs one explicit step
+  beyond `git pull`: secrets are deliberately excluded from git, so the
+  laptop also needs `bw unlock` + `pull_env_from_vault.py` to actually
+  receive the real keys just pushed here.
+
+**Left unresolved:**
+- The laptop has not yet pulled the real secrets down — until it runs `bw
+  unlock` + `pull_env_from_vault.py`, its local `.env` still only has the
+  weekend's smoke-test key.
+- `.claude/commands/checkpoint.md` still doesn't exist in the committed
+  repo — if the CEO wants it available on every machine, it needs to be
+  rebuilt and actually committed this time. *(Resolved same day, laptop
+  session above: the file was still sitting uncommitted locally on the
+  laptop all along — no rebuild needed, just committed it.)*
 
 ## Session — 2026-07-26 (checkpoint)
 
