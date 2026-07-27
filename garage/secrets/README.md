@@ -1,5 +1,23 @@
 # Keeping API keys in sync across both computers (Bitwarden)
 
+## Quick path: one-click sync
+
+Double-click **`Sync Bitwarden Secrets.bat`** at the repo root. It asks for
+your Bitwarden master password once (a normal masked prompt — nothing is
+displayed, nothing is saved to disk except `.env` itself), pulls the real
+secrets down, and locks the vault again automatically. This is the
+`bw unlock` + `pull_env_from_vault.py` + `bw lock` sequence below, done for
+you in one step (`garage/secrets/sync_secrets.ps1` is what it runs).
+
+This only works after the one-time setup below has been done once on this
+computer (`bw login`, and the vault item already exists from the desktop's
+`push_env_to_vault.py` run). If you ever rotate a credential, push it from
+whichever computer changed it (see "After rotating any token" below) —
+that direction still needs a manual `bw unlock` + `push_env_to_vault.py`,
+since pushing is a rarer, more deliberate action than pulling.
+
+## Manual path (what the one-click script automates)
+
 `.env` is deliberately gitignored — it holds real credentials
 (`ANTHROPIC_API_KEY`, `SHOPIFY_ACCESS_TOKEN`, `SHOPIFY_STORE_DOMAIN`,
 `PRINTFUL_API_KEY`, etc.), so git push/pull (what `/start-of-day` and
