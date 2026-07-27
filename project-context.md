@@ -1,5 +1,5 @@
 # Project: Minivan Dads — The Brain (COO)
-Last updated: 2026-07-26 by Claude Code
+Last updated: 2026-07-27 by Claude Code
 
 ## What this project is
 Minivan Dads Inc. is a print-on-demand apparel brand (Printful catalog, "Old Guys Rule" playbook) targeting minivan-driving dads, aiming for $200k+/yr net income or a seven-figure exit. This project is "The Brain" — Phase 1 of a multi-agent company system: a CLI orchestrator (COO) plus HQ, a git-diffable Markdown filesystem that is the company's single source of truth. Future department agents (Market Intel, Creative, Content, Product, Storefront, Customer, Paid Ads, Finance) will read directives from and write reports to HQ in later phases — not built yet, but the Phase 1 design must not box them out.
@@ -46,14 +46,12 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: e79ff04 — Fix print-derivation crop/border drift, run first
-real master through pipeline (CEO-approved commit of the prior session's
-pending work)
-In progress (uncommitted): website-audit skill installed
-(.claude/skills/website-audit/), full audit report written
-(garage/research/joshballart-website-audit-2026-07-26.md), new
-/checkpoint command (.claude/commands/checkpoint.md), project-context.md
-What's next entry
+Last commit: c403581 — Checkpoint 2026-07-26 — mid-session save
+In progress (uncommitted): print-derivation resolution-honesty fix —
+garage/prints/derive_prints.py (never upscale past native crop DPI;
+acceptable tier ships native DPI; FAIL tier writes {size}_DO-NOT-SELL.jpg),
+tests/test_derive_prints.py (3 fixtures bumped, 3 new regression tests),
+regenerated garage/prints/ready/steve/16x20.jpg + proofs/steve-proof.jpg
 Branch: main
 
 ## What's next
@@ -114,6 +112,7 @@ Browser tasks, desktop automation, file management.
 Use project-context-updater.html on Cowork-heavy days.
 
 ## Change log
+- 2026-07-27 — Diagnosed and fixed a real resolution-honesty bug in garage/prints/derive_prints.py: every print size was being unconditionally upscaled to 300 DPI regardless of its true resolution, contradicting the script's own "never upscaled silently" docstring claim; fixed so only downsampling is ever allowed, acceptable-tier sizes (200-299 DPI) ship at native honest DPI, and sub-200 DPI sizes write to a clearly-marked {size}_DO-NOT-SELL.jpg instead of the sellable filename; bumped 3 test fixtures and added 3 new regression tests (355 passing); regenerated Steve's real 16x20 output to its honest ~218 DPI. Traced the decision history behind selling physical prints back to the 2026-07-21 pivot. Uncommitted, pending CEO go-ahead — Source: Claude Code
 - 2026-07-26 — Committed the CEO-approved print-pipeline fix from the prior session (e79ff04); installed the CEO-requested website-audit-skill (via raw file fetch, not git clone, per CEO instruction) at .claude/skills/website-audit/; ran a full critical UX/brand/conversion audit of joshballart.com across homepage/nav/collections/policies, all 13 original art/drinkware products, a sample of the Jacquard supply catalog, static pages, and blog — written to garage/research/joshballart-website-audit-2026-07-26.md; built a new /checkpoint command for mid-session saves before /clear — Source: Claude Code
 - 2026-07-25 (2) — Ran a real photo ("Steve") through the print-derivation pipeline for the first time and found/fixed a real bug: it padded instead of cropping, so borders didn't match on every edge — rebuilt to crop each size to its own aspect ratio first, then scale uniformly, closing a gap between the 2026-07-21 research and the code that had gone unnoticed; landed on a final border spec after validating against real standard-mat mockups and FinerWorks' own ordering docs (always checkout "borderless"); planned the first physical sample-print order (16x20 + three 8x10 papers). All uncommitted, pending CEO go-ahead — Source: Claude Code
 - 2026-07-25 — Pulled and merged the desktop's Josh Ball Art pivot session (real Printful/Shopify connectors, product catalog, approve-and-execute pricing); updated `origin` remote to the renamed GitHub repo; hardened `/start-of-day` (pulls first) and `/end-of-day` (pushes after commit) so git sync is enforced, not manual (d1f3903); proposed a real live-test price action for the Enamel Cup, correctly rejected-and-escalated as ACT-2026-W30-0014/ESC-016 (8a9c619); built and verified a Bitwarden-vault-based `.env` sync (`garage/secrets/`) to fix the cross-machine secrets gap that blocked approving it (7e90e8f) — Source: Claude Code

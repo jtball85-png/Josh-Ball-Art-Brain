@@ -23,6 +23,81 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
+## Session — 2026-07-27
+
+**Focus:** Reviewed current print pipeline + site state, traced the decision
+history behind selling physical prints, then diagnosed and fixed a real
+resolution-honesty bug in the print-derivation pipeline surfaced by a CEO
+question about FinerWorks' own resolution-QA numbers for "Steve."
+
+**Decisions made:**
+- Print pipeline policy: never upscale past native crop resolution — only
+  downsampling is allowed, since downsampling discards excess real pixels
+  while upscaling invents detail the sensor never captured. CEO explicitly
+  did not want image quality compromised and asked to be told a concrete
+  acceptable-resampling standard rather than accept a silent default.
+- For sizes below FinerWorks' 200 DPI floor (FAIL tier): still write a file,
+  but under a clearly-marked `{size}_DO-NOT-SELL.jpg` name rather than
+  skipping it entirely — CEO's explicit choice over the alternative (no file
+  at all), so a failed size stays visible for inspection without risk of
+  being mistaken for a sellable file.
+
+**Problems solved:**
+- Found and fixed a real bug in `garage/prints/derive_prints.py`: every size
+  was being unconditionally resized to exactly 300 DPI worth of pixels via
+  Lanczos, regardless of the honest `eff_dpi`/verdict the code itself
+  computed — silently upscaling any crop below 300 DPI (e.g. "Steve"'s 16x20
+  at a true ~218 DPI) and contradicting the script's own docstring claim of
+  "never upscaled silently." Root cause: the verdict was computed but never
+  gated the resize step. Fixed so >=300 DPI still downsamples to the 300 DPI
+  shipping grid (unchanged), 200-299 DPI ships at native pixel size with an
+  honest DPI tag (no resize call at all), and <200 DPI writes to
+  `{size}_DO-NOT-SELL.jpg` instead of the plain sellable filename. Regenerated
+  Steve's real output: 16x20 changed from a fake-300-DPI file to its honest
+  3488x4360px / 218 DPI. Bumped 3 existing test fixtures that were
+  unknowingly relying on the old upscale behavior, added 3 new regression
+  tests locking in each tier's real behavior (excellent/acceptable/FAIL).
+  Full suite: 355 passed.
+
+**Approaches discussed:**
+- Traced why "print the photos" happened at all: the 2026-07-21 pivot
+  decision set the strategy (originals + giclee prints first); the
+  derivation pipeline was built the same day; "Steve" was the first real
+  master run through it (2026-07-25), which surfaced the original crop/border
+  bug (already fixed and committed); no CEO decision yet to actually *sell*
+  Steve — that remains open.
+- Searched for outside community consensus on acceptable DPI for 16x20
+  giclée prints (CEO asked for a Reddit search specifically; Reddit blocks
+  this session's search tool directly, so adjacent sources were used
+  instead — photography forums, Adobe/Etsy community threads). Consensus:
+  200-300 DPI acceptable, 240+ comfortable, 300 ideal, with viewing distance
+  doing a lot of the work at larger sizes — Steve's real 218 DPI sits
+  solidly in the "acceptable" band, not borderline.
+
+**Left unresolved:**
+- The FinerWorks physical sample-order list's line #3 (paper substitute for
+  "Hahnemühle Photo Rag (matte)," which the CEO found is not actually offered
+  as a checkout option at `printproducttypeid=5`) — waiting on the CEO to
+  paste the real paper/media dropdown options from that live order page so
+  the correct substitute can be picked and the order list + paper research
+  file corrected.
+- The physical FinerWorks sample order itself (16x20 Baryta + three 8x10
+  papers) has still not been placed.
+- Whether to actually sell the "Steve" print at any size remains an open CEO
+  decision, not yet made.
+
+**Files changed this session (plus prior checkpoint commit, all uncommitted
+as of this entry):**
+```
+ garage/prints/derive_prints.py       |  55 ++++++++++++++++++------
+ garage/prints/proofs/steve-proof.jpg | Bin 232851 -> 232926 bytes
+ garage/prints/ready/steve/16x20.jpg  | Bin 7871512 -> 5017823 bytes
+ project-context.md                   |  17 +++++---
+ project-memory.md                    |  79 +++++++++++++++++++++++++++++++++++
+ tests/test_derive_prints.py          |  54 ++++++++++++++++++++++--
+ 6 files changed, 182 insertions(+), 23 deletions(-)
+```
+
 ## Session — 2026-07-26 (checkpoint)
 
 **Focus:** Committed the prior session's pending print-pipeline fix (with CEO
