@@ -23,6 +23,77 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
+## Session — 2026-07-27 (checkpoint 2 — one-click Bitwarden sync)
+
+**Focus:** Ran end-of-day/start-of-day to reconcile this laptop with the
+desktop's same-day session, then built a one-click tool so the CEO can pull
+real secrets from the Bitwarden vault on either computer without ever
+routing a master password or session key through chat.
+
+**Decisions made:**
+- A raw Bitwarden session key appearing in chat is treated as a real
+  exposure requiring immediate `bw lock`, no exceptions — happened twice
+  this session (mirroring the desktop's incident from earlier the same
+  day) before the one-click script eliminated the manual-paste step
+  entirely.
+- Built `Sync Bitwarden Secrets.bat` (repo root) + `garage/secrets/sync_secrets.ps1`:
+  double-click, type the master password into a native masked prompt once,
+  it unlocks, syncs, pulls, and re-locks the vault automatically. Nothing
+  is written to disk except `.env` itself; the password/session key never
+  pass through Claude Code at all — this was the CEO's explicit design
+  request after the manual copy/paste flow kept failing.
+
+**Problems solved:**
+- Same-day merge conflict: both this laptop and the desktop ran
+  `/end-of-day` against the same two memory files. Resolved by keeping
+  both sessions' entries distinctly labeled (`(laptop)` / `(desktop)`)
+  rather than either overwriting the other.
+- `sync_secrets.ps1` v1 closed the terminal window silently right after
+  the password prompt — root cause: `2>&1` on a native command (`bw
+  unlock`) under PowerShell 5.1's strict `$ErrorActionPreference = "Stop"`
+  wraps stderr lines as terminating errors. Fixed with a top-level
+  try/catch/finally (so the window always stays open and shows what
+  happened) and by discarding stderr via `2>$null` instead of merging it.
+- v2 then hit `bw`'s interactive "? Master password: [hidden]" prompt
+  rendering even with the password piped via stdin — piping isn't what
+  `bw unlock` expects for non-interactive use. Switched to `bw`'s own
+  documented `--passwordenv` flag (a scoped, process-local env var) instead
+  of stdin piping.
+- v3 unlocked fine but only pulled 1 key instead of 9 — this laptop's local
+  `bw` cache hadn't synced with the server since 2026-07-25, two days
+  before the desktop's real-secrets push earlier today, so `bw unlock` was
+  decrypting stale local vault data. Added an explicit `bw sync` step
+  before the pull. Confirmed working end-to-end: all 9 expected keys
+  (`ANTHROPIC_API_KEY`, `PRINTFUL_API_KEY[_MVD]`, `PRINTFUL_STORE_ID[_MVD]`,
+  `SHOPIFY_CLIENT_ID/SECRET/ACCESS_TOKEN/STORE_DOMAIN`) landed in this
+  laptop's `.env` by key-name-only verification (values never inspected).
+- Verified (by reading `brain/main.py`'s `build_connectors()` and
+  `brain/executor.py`'s `approve_action()`) that this laptop can now
+  actually execute CEO-approved live Shopify/Printful actions, not just
+  the desktop — the secrets gap that stranded ESC-016 is closed on both
+  machines. Governance (capabilities.yaml, limits.yaml, hard-denied price
+  actions, `printful.create_product`'s dry-run demotion, Etsy still
+  disconnected) is unchanged by this — closing the secrets gap didn't
+  touch the authority gates.
+
+**Left unresolved:**
+- ESC-016 (Enamel Cup $14.00→$19.50) has not actually been approved from
+  the dashboard yet — this session confirmed the capability exists, but
+  the CEO hadn't clicked approve as of this checkpoint.
+- Same open items as the last session: FinerWorks sample-order paper
+  substitute, physical sample order not placed, whether to sell "Steve,"
+  and the full `project-context.md` "What's next" backlog.
+
+**Files changed this session:**
+```
+ Sync Bitwarden Secrets.bat      |   9 ++++
+ garage/secrets/README.md        |  18 +++++++
+ garage/secrets/sync_secrets.ps1 | 116 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 143 insertions(+)
+```
+(plus the earlier end-of-day/start-of-day merge and print-derivation fix
+commits already captured in the session entry below)
+
 ## Session — 2026-07-27 (laptop — print-derivation resolution-honesty fix)
 
 **Focus:** Reviewed current print pipeline + site state, traced the decision
