@@ -46,13 +46,9 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: 7b531bb — Add one-click Bitwarden secrets sync
-In progress: none — working tree clean on this laptop. This laptop's
-.env now has all 9 real secrets pulled from the vault (verified by key
-name only). (The desktop separately still has its own local-only stray
-uncommitted files — garage/prints/masters/Test.jpg, proofs/Test-proof.jpg,
-ready/Test/, and a deleted-but-uncommitted masters/sample-photo.jpg —
-unaffected by this.)
+Last commit: 64c50f4 — Checkpoint 2026-07-27 (2) — mid-session save
+In progress: none — working tree clean. This session was advisory only
+(joshballart.com portfolio/gallery options), no code or file changes.
 Branch: main
 
 ## What's next
@@ -113,6 +109,7 @@ Browser tasks, desktop automation, file management.
 Use project-context-updater.html on Cowork-heavy days.
 
 ## Change log
+- 2026-07-27 (3) — CEO asked about better showcasing artwork on joshballart.com's portfolio pages; confirmed live site runs Shopify's Dawn theme (supports no-code gallery sections in the theme editor); laid out three options (built-in Dawn sections, a gallery/lightbox app, or a custom-coded Liquid section) referencing the 2026-07-26 site audit's thin-portfolio-page findings; confirmed the Shopify connector has no theme-code capability, so custom code would still need the CEO to paste/publish it in Shopify admin; CEO deferred all three options for now — no changes made — Source: Claude Code
 - 2026-07-27 (checkpoint 2) — Reconciled this laptop's same-day end-of-day with the desktop's (merge, both sessions kept); built a one-click Bitwarden secrets sync (`Sync Bitwarden Secrets.bat` + `garage/secrets/sync_secrets.ps1`) after the manual `bw unlock`/paste flow repeatedly failed (fixed a PowerShell stderr-as-terminating-error bug, switched from stdin piping to `bw`'s `--passwordenv` flag, added a missing `bw sync` step for stale local vault cache); confirmed all 9 real secrets now on this laptop and that CEO-approved live Shopify/Printful actions can execute from either computer, governance unchanged — Source: Claude Code
 - 2026-07-27 (laptop) — Diagnosed and fixed a real resolution-honesty bug in garage/prints/derive_prints.py: every print size was being unconditionally upscaled to 300 DPI regardless of its true resolution, contradicting the script's own "never upscaled silently" docstring claim; fixed so only downsampling is ever allowed, acceptable-tier sizes (200-299 DPI) ship at native honest DPI, and sub-200 DPI sizes write to a clearly-marked {size}_DO-NOT-SELL.jpg instead of the sellable filename; bumped 3 test fixtures and added 3 new regression tests (355 passing); regenerated Steve's real 16x20 output to its honest ~218 DPI. Traced the decision history behind selling physical prints back to the 2026-07-21 pivot. Also committed the previously-orphaned 2026-07-26 checkpoint work (.claude/commands/checkpoint.md, .claude/skills/website-audit/, the joshballart.com audit report) that never made it into a commit — Source: Claude Code
 - 2026-07-27 (desktop) — Pulled the weekend's laptop work (checkpoint, print-pipeline fix); installed the Bitwarden CLI on this desktop via winget (it only existed on the laptop before); pushed this desktop's real Shopify/Printful/Anthropic secrets into the shared "JBA Brain .env" vault item and verified all 9 keys landed, then locked the vault after the CEO's session key ended up in the chat; confirmed running Claude Code on both computers at once is safe (independent git clones, no shared state); found `/checkpoint` was never actually committed (laptop-only) and used `/end-of-day` instead — Source: Claude Code

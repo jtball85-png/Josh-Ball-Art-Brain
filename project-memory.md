@@ -23,6 +23,37 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
+## Session — 2026-07-27 (3 — portfolio/gallery advisory)
+
+**Focus:** CEO asked whether a coding solution or addon could better showcase
+the artwork on joshballart.com's portfolio pages/subsections.
+
+**Decisions made:**
+- CEO decided not to make any storefront/portfolio changes right now —
+  parked for a future session.
+
+**Approaches discussed:**
+- Confirmed via a live fetch of joshballart.com that it runs Shopify's Dawn
+  theme (Online Store 2.0), which supports no-code drag-and-drop gallery
+  sections (Slideshow, Collage, Multi-column) in the theme editor.
+- Laid out three options: (1) no-code Dawn built-in sections, (2) a Shopify
+  gallery/lightbox app, (3) a custom-coded Liquid/CSS/JS lightbox gallery
+  section — findings tie back to
+  `garage/research/joshballart-website-audit-2026-07-26.md`, which already
+  flagged the Cyanotypes/Photography/Suminagashi pages as thin (mostly an
+  image grid plus repeated mission-statement text).
+- CEO asked whether the brain could paste-and-publish custom theme code via
+  the executor. Confirmed no — `brain/connectors/shopify.py` only
+  implements `update_listing_copy`, `update_listing_images`, and
+  `set_price`; there is no theme-code capability registered anywhere, and
+  Shopify's theme "Edit code" → Publish step is a manual admin-console
+  action outside the executor's reach in any case. Publishing theme/brand
+  changes stays CEO-only, consistent with existing governance.
+
+**Left unresolved:**
+- Which gallery approach (no-code sections, app, or custom code) to pursue,
+  and when.
+
 ## Session — 2026-07-27 (checkpoint 2 — one-click Bitwarden sync)
 
 **Focus:** Ran end-of-day/start-of-day to reconcile this laptop with the
