@@ -77,7 +77,7 @@ def _assert_borders(sheet_path, sw_in, sh_in, border_left, border_top,
     assert _is_fill(img.getpixel((cx, bottom_px - probe)))
 
 
-@pytest.mark.parametrize("w, h", [(2000, 2000), (3000, 4000), (4000, 3000)])
+@pytest.mark.parametrize("w, h", [(6000, 6000), (4500, 6000), (6000, 4500)])
 def test_8x10_border_uniform_all_sides(dp, tmp_path, w, h):
     """8x10 gets 0.3in on every side, regardless of the source photo's shape."""
     src = _make_source(tmp_path, f"src_{w}x{h}.jpg", w, h)
@@ -89,8 +89,8 @@ def test_8x10_border_uniform_all_sides(dp, tmp_path, w, h):
 
 
 @pytest.mark.parametrize("name, w, h", [
-    ("11x14", 2000, 2000), ("11x14", 3000, 4000), ("11x14", 4000, 3000),
-    ("16x20", 2000, 2000), ("16x20", 3000, 4000), ("16x20", 4000, 3000),
+    ("11x14", 6000, 6000), ("11x14", 4500, 6000), ("11x14", 6000, 4500),
+    ("16x20", 6000, 6000), ("16x20", 4500, 6000), ("16x20", 6000, 4500),
 ])
 def test_11x14_and_16x20_bottom_weighted(dp, tmp_path, name, w, h):
     """11x14/16x20 keep a light bottom-weighted mat touch — bottom border is
@@ -111,7 +111,7 @@ def test_crop_never_stretches_aspect_ratio(dp, tmp_path):
     """The cropped region must already match the sheet's content ratio before
     scaling — scaling is then uniform (same factor both axes), so nothing
     gets stretched out of shape."""
-    src = _make_source(tmp_path, "src_stretch_check.jpg", 3000, 4000)
+    src = _make_source(tmp_path, "src_stretch_check.jpg", 4500, 6000)
     dp.derive(src)
     for name, sw, sh, b_lrt, b_bottom in dp.SHEETS:
         sheet_path = dp.READY / src.stem / f"{name}.jpg"
@@ -121,3 +121,49 @@ def test_crop_never_stretches_aspect_ratio(dp, tmp_path):
         expected_ratio = (sw - 2 * b_lrt) / (sh - b_lrt - b_bottom)
         actual_ratio = content_w / content_h
         assert actual_ratio == pytest.approx(expected_ratio, rel=0.01)
+
+
+def test_excellent_tier_still_downsamples_to_300dpi(dp, tmp_path):
+    """A comfortably high-res master must still land on the standard 300 DPI
+    grid + 300 DPI tag, unchanged by the never-upscale fix — this is a
+    no-regression check on the untouched >=300 DPI branch."""
+    src = _make_source(tmp_path, "src_excellent.jpg", 6000, 6000)
+    dp.derive(src)
+    landscape = True  # square source, iw >= ih
+    for name, s_short, s_long, b_lrt, b_bottom in dp.SHEETS:
+        sw_in, sh_in = (s_long, s_short) if landscape else (s_short, s_long)
+        img = Image.open(dp.READY / src.stem / f"{name}.jpg")
+        assert img.size == (round(sw_in * DPI), round(sh_in * DPI))
+        assert img.info["dpi"] == pytest.approx((DPI, DPI), abs=1)
+
+
+def test_acceptable_tier_ships_native_resolution_no_upscale(dp, tmp_path):
+    """A crop landing in the 200-299 DPI band must not be upscaled to 300;
+    the sheet ships at the crop's own true eff_dpi instead."""
+    # Sized so 16x20's eff_dpi lands exactly on 250.0; 8x10 (~473) and
+    # 11x14 (~347) for this same source are safely excellent, isolating the
+    # acceptable-tier behavior to just the one size.
+    src = _make_source(tmp_path, "src_acceptable.jpg", 3500, 4469)
+    dp.derive(src)
+    sheet_path = dp.READY / src.stem / "16x20.jpg"
+    img = Image.open(sheet_path)
+    assert img.size == (4000, 5000)  # 16*250, 20*250 -- NOT 16*300, 20*300
+    assert img.info["dpi"] == pytest.approx((250, 250), abs=1)
+
+
+def test_fail_tier_writes_do_not_sell_file(dp, tmp_path):
+    """A crop below 200 DPI must not produce a plain, sellable ready file --
+    it's saved under a DO-NOT-SELL name instead, and noted in the report.
+    Other sizes for the same master are unaffected, proving the FAIL branch
+    is isolated to the one undersized dimension."""
+    # Sized so 16x20's eff_dpi lands exactly on 150.0; 8x10 (~283.8) and
+    # 11x14 (~208.2) for this same source are both "acceptable" and must
+    # still be written normally.
+    src = _make_source(tmp_path, "src_fail.jpg", 2100, 2681)
+    report = dp.derive(src)
+    out_dir = dp.READY / src.stem
+    assert not (out_dir / "16x20.jpg").exists()
+    assert (out_dir / "16x20_DO-NOT-SELL.jpg").exists()
+    assert any("16x20" in line and "FAIL" in line and "DO-NOT-SELL" in line for line in report)
+    assert (out_dir / "8x10.jpg").exists()
+    assert (out_dir / "11x14.jpg").exists()
