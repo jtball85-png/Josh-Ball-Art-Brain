@@ -46,18 +46,11 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: (this merge) — reconciling two same-day end-of-day sessions
-(this laptop's print-derivation fix; the desktop's Bitwarden secrets push)
-In progress: this laptop is about to commit the print-derivation
-resolution-honesty fix (garage/prints/derive_prints.py, tests/test_derive_prints.py,
-regenerated garage/prints/ready/steve/16x20.jpg) plus previously-orphaned
-work from the 2026-07-26 checkpoint session that never got committed
-(.claude/commands/checkpoint.md, .claude/skills/website-audit/,
-garage/research/joshballart-website-audit-2026-07-26.md). The desktop
-separately has its own local-only stray uncommitted files
-(garage/prints/masters/Test.jpg, proofs/Test-proof.jpg, ready/Test/, and a
-deleted-but-uncommitted masters/sample-photo.jpg) that remain uncommitted
-there.
+Last commit: 1706f5a — Commit orphaned 2026-07-26 checkpoint session work
+In progress: none — working tree clean on this laptop. (The desktop
+separately still has its own local-only stray uncommitted files —
+garage/prints/masters/Test.jpg, proofs/Test-proof.jpg, ready/Test/, and a
+deleted-but-uncommitted masters/sample-photo.jpg — unaffected by this.)
 Branch: main
 
 ## What's next
