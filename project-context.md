@@ -46,12 +46,39 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: 64c50f4 — Checkpoint 2026-07-27 (2) — mid-session save
-In progress: none — working tree clean. This session was advisory only
-(joshballart.com portfolio/gallery options), no code or file changes.
+Last commit: b5ba04a — End of day 2026-07-27 — context and memory updated
+In progress (uncommitted as of this entry): `brain/actions/limits.yaml`,
+`brain/actions/registry.py`, `brain/connectors/shopify.py`,
+`hq/actions/capabilities.yaml`, `hq/actions/log.jsonl`,
+`hq/escalations/queue.md`, `hq/products/catalog.json`,
+`hq/products/catalog.md`, `tests/test_limits.py`,
+`tests/test_shopify_connector.py`; new untracked files
+`garage/design/push_shopify_product.py`,
+`garage/design/pushes/steve-bodysurfer-print.yaml`,
+`garage/prints/compose_room_mockup.py`, `garage/prints/mockup-sources/`,
+`garage/prints/mockups/`, `garage/prints/new-print-intake-checklist.md`,
+`hq/actions/snapshots/ACT-2026-W31-{0003,0005,0010,0012,0013,0017}.json`.
+368 tests passing.
 Branch: main
 
 ## What's next
+- [ ] CEO decision needed: the Steve/bodysurfer draft product's Shopify
+  listing (handle `bodysurfer-ventura-black-white-fine-art-photography-print`)
+  currently has 8 images; CEO wants it down to just 1 (the best clean
+  product photo, no lifestyle mockups, no other-size photos) — this can't
+  be done via the API (the JBA Brain app only has `read_products`/
+  `write_products` scopes, no `write_files`; both the GraphQL `fileDelete`
+  mutation and the legacy REST image-delete endpoint were tried live and
+  blocked/gone). CEO needs to either delete the other 7 images by hand in
+  Shopify admin, or authorize adding the `write_files` scope to the app.
+- [ ] The print still has no public name — CEO has twice redirected the
+  naming question (once toward building a standing "new print intake"
+  checklist instead, `garage/prints/new-print-intake-checklist.md`, once
+  left unanswered). Still labeled "Bodysurfer, Ventura" on the draft.
+- [ ] Real per-paper FinerWorks wholesale costs are still unconfirmed
+  (current $55/$85/$145 ladder is priced off a researched estimate + market
+  comparables, not real invoice costs) — revisit once the CEO has a real
+  FinerWorks account.
 - [ ] CEO review owed: `garage/research/joshballart-website-audit-2026-07-26.md` (full site UX/brand/conversion audit) — once back on the desktop computer with the vault passcodes
 - [ ] Desktop's real Shopify/Printful/Anthropic secrets are now pushed to the Bitwarden vault (2026-07-27) — remaining: on the laptop, `bw unlock` + `garage/secrets/pull_env_from_vault.py`, then approve ESC-016 (Enamel Cup $14.00→$19.50, ACT-2026-W30-0014) from the dashboard to actually execute it live
 - [ ] Mug pricing (Bodysurf Fin Mug, Logo Mug) still unresolved — `shopify.set_price` can only set one flat price per product, which would collapse their existing 11/15/20oz price ladder; needs either a per-variant pricing capability or a CEO decision to accept the flattening
@@ -109,6 +136,7 @@ Browser tasks, desktop automation, file management.
 Use project-context-updater.html on Cowork-heavy days.
 
 ## Change log
+- 2026-07-27 (5) — CEO directed live setup of the Steve/bodysurfer print's Shopify pricing and imagery: applied a researched price ladder ($55/$85/$145 by size, uniform across papers) after CEO approval, built and used three new governed capabilities (`shopify.set_variant_prices`, `shopify.add_product_images`, `shopify.remove_product_images` — money/deletion actions absent from every agent's allowed_actions, executed via `Executor.approve_action`); iterated on lifestyle room mockups twice after CEO rejected both attempts (built `garage/prints/compose_room_mockup.py`, researched real coastal-photographer competitor listings and California-Casual interior style for the second attempt) before the CEO asked to strip the listing down to one clean photo with no lifestyle mockups; discovered live that this can't be done via the API — the JBA Brain Shopify app has no `write_files` scope, so both `fileDelete` and the legacy REST image-delete endpoint are blocked, leaving manual deletion or a scope grant as the CEO's only paths forward; naming still undecided (CEO redirected twice, once toward a new standing intake checklist at `garage/prints/new-print-intake-checklist.md`) — Source: Claude Code
 - 2026-07-27 (3) — CEO asked about better showcasing artwork on joshballart.com's portfolio pages; confirmed live site runs Shopify's Dawn theme (supports no-code gallery sections in the theme editor); laid out three options (built-in Dawn sections, a gallery/lightbox app, or a custom-coded Liquid section) referencing the 2026-07-26 site audit's thin-portfolio-page findings; confirmed the Shopify connector has no theme-code capability, so custom code would still need the CEO to paste/publish it in Shopify admin; CEO deferred all three options for now — no changes made — Source: Claude Code
 - 2026-07-27 (checkpoint 2) — Reconciled this laptop's same-day end-of-day with the desktop's (merge, both sessions kept); built a one-click Bitwarden secrets sync (`Sync Bitwarden Secrets.bat` + `garage/secrets/sync_secrets.ps1`) after the manual `bw unlock`/paste flow repeatedly failed (fixed a PowerShell stderr-as-terminating-error bug, switched from stdin piping to `bw`'s `--passwordenv` flag, added a missing `bw sync` step for stale local vault cache); confirmed all 9 real secrets now on this laptop and that CEO-approved live Shopify/Printful actions can execute from either computer, governance unchanged — Source: Claude Code
 - 2026-07-27 (laptop) — Diagnosed and fixed a real resolution-honesty bug in garage/prints/derive_prints.py: every print size was being unconditionally upscaled to 300 DPI regardless of its true resolution, contradicting the script's own "never upscaled silently" docstring claim; fixed so only downsampling is ever allowed, acceptable-tier sizes (200-299 DPI) ship at native honest DPI, and sub-200 DPI sizes write to a clearly-marked {size}_DO-NOT-SELL.jpg instead of the sellable filename; bumped 3 test fixtures and added 3 new regression tests (355 passing); regenerated Steve's real 16x20 output to its honest ~218 DPI. Traced the decision history behind selling physical prints back to the 2026-07-21 pivot. Also committed the previously-orphaned 2026-07-26 checkpoint work (.claude/commands/checkpoint.md, .claude/skills/website-audit/, the joshballart.com audit report) that never made it into a commit — Source: Claude Code

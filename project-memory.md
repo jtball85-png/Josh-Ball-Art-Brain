@@ -23,6 +23,246 @@ Decisions that shaped the project — keep these forever.
 
 Most recent session at the top.
 
+## Session — 2026-07-27 (5 — pricing applied, mockups redone twice, image-deletion blocked)
+
+**Focus:** Continuation of the same-day Steve/bodysurfer print work — CEO
+asked to apply the researched pricing, add the room mockups (one clean
+photo first, lifestyles after), and make the live Shopify updates. Then,
+after seeing the result, CEO rejected the lifestyle mockups twice and
+asked to research what a real coastal/ocean photographer would use plus
+"California homes" as a theme; after a second rejection, asked to strip
+the listing down to a single clean product photo with no lifestyles and
+no other sizes.
+
+**Decisions made:**
+- Applied the CEO-approved price ladder live: $55 (8x10) / $85 (11x14) /
+  $145 (16x20), uniform across all 3 papers — built specifically because
+  `shopify.set_price` can only set one flat product-wide price, not a
+  per-size ladder.
+- Built two more governed capabilities beyond the session's earlier
+  `shopify.create_product`: `shopify.set_variant_prices` (per-option-value
+  price ladder) and `shopify.add_product_images` (append local files to an
+  existing product via staged upload). Both follow the existing money/
+  irreversible-action conventions already in the codebase — `set_variant_prices`
+  is money (absent from every agent's allowed_actions, always
+  rejects-then-needs `Executor.approve_action`); `add_product_images` is
+  irreversible=True (no clean undo for "images got added"), so it had to be
+  granted at capability mode AUTO for its one-rung-down irreversible
+  demotion to still execute live (SUPERVISED would have demoted all the way
+  to dry-run — this wasn't obvious until the first attempt silently stayed
+  dry-run).
+- After the CEO called the first lifestyle mockups bad ("out of place,"
+  one hanging over a chair that looked like it was floating in the middle
+  of the room), researched real comparable coastal/surf photographers'
+  actual product-page mockups (Cattie Coyle Photography, Carly Tabak Print
+  Shop) and the "California Casual" / Amber Interiors interior-design
+  aesthetic, then rebuilt with a thin natural-wood frame + a generous white
+  gallery mat (both absent from the first attempt) and placement strictly
+  above furniture flush against a wall (never floating in open floor
+  space). CEO rejected this second attempt too and asked to drop lifestyle
+  mockups entirely — just one clean product photo.
+- Built a third capability, `shopify.remove_product_images`, to try to
+  honor that — also money-adjacent/deletion, kept out of every agent's
+  allowed_actions on the same "always escalates" principle as pricing,
+  irreversible=True (Shopify has no undelete). Both a live attempt via the
+  governed executor path and a direct legacy-REST-endpoint test failed:
+  the JBA Brain Shopify app only has `read_products`/`write_products`
+  scopes (confirmed via `currentAppInstallation.accessScopes`) — no
+  `write_files`, which both the modern `fileDelete` mutation and (it turns
+  out) the now-fully-removed legacy REST product-image-delete endpoint
+  require. This is a real, unresolved platform-permission gap, not a bug —
+  the only ways through are the CEO deleting images by hand in Shopify
+  admin, or the CEO authorizing a `write_files` scope grant on the app.
+
+**Problems solved:**
+- `.venv/Scripts/pip install -e ".[dev]"` (the documented reinstall command)
+  produced no output and exited 1 when run directly; running the equivalent
+  `python -m pip install -e ".[dev]"` instead showed real progress and
+  succeeded — worth knowing if this reinstall is ever needed again on this
+  machine.
+- Confirmed live that `productCreate`'s `productOptions` field only
+  auto-generates ONE default variant, never the full option-value matrix —
+  this was assumed differently in the first `shopify.create_product` build
+  earlier the same session and caught by post-execute verification, not by
+  the dry-run rehearsal (dry-runs never touch the connector, so they can't
+  catch a wrong assumption about the live API's actual behavior).
+- Shopify's tag-based product search (`_find_by_external_id`, used by
+  `restore()`) is eventually consistent — a query run within seconds of
+  `productCreate` returned no match even though the product existed
+  moments later. Documented in the connector; matters for any future
+  rollback attempted immediately after a create.
+- `productCreateMedia` and `productDeleteMedia` are both deprecated at this
+  store's API version (2026-07) in favor of `fileCreate`/`fileUpdate` and
+  `fileDelete` respectively — `_add_images` still uses the deprecated
+  (but functional) `productCreateMedia`; only `_remove_images` was switched
+  to the modern `fileDelete`, which is what surfaced the missing-scope
+  problem.
+
+**Approaches discussed:**
+- Real pricing research this session (via two independent background
+  research agents): FinerWorks does not publish wholesale/reseller costs;
+  best available anchor is their own "3x markup" worked example (implies
+  wholesale ≈ 33% of retail), cross-checked against Printful's public
+  wholesale poster-paper floors. Separately, comparable independent
+  coastal/surf photographers (Cattie Coyle Photography, Carly Tabak Print
+  Shop, Anne Whitty Photography) charge roughly $50-65 / $80-95 / $135-160
+  for premium unframed B&W giclée prints at 8x10/11x14/16x20 — the $55/$85/
+  $145 ladder was picked from within that band.
+- Considered routing image/price edits around the executor since the CEO
+  was directing everything live in conversation, but kept every write on
+  the governed path (submit → reject → `Executor.approve_action` for money/
+  deletion actions, matching the existing ESC-016 precedent) rather than
+  making an exception for "the CEO is right here." Consistent with
+  CLAUDE.md's "executor is the only path to external writes" read as
+  unconditional.
+
+**Left unresolved:**
+- The print still has no public name. CEO redirected the naming question
+  twice: first toward building a standing process instead (produced
+  `garage/prints/new-print-intake-checklist.md`), then left the direct
+  "what do you want to call it?" question unanswered while other issues
+  took priority. Still labeled "Bodysurfer, Ventura" on the draft listing.
+- CEO wants the listing at exactly one image (the best clean product
+  photo). Blocked on the `write_files` scope gap above — the image order
+  is set so the desired photo is first, but the other 7 (including the 3
+  disliked lifestyle mockups, pushed to the very end) are still attached
+  and will show in the storefront gallery until the CEO deletes them by
+  hand or grants the scope.
+- Real FinerWorks per-paper wholesale costs are still an estimate, not
+  confirmed figures — flagged to revisit once a real FinerWorks account
+  exists.
+- All of this session's code (registry/limits/connector/tests/scripts) is
+  uncommitted as of this entry, per the end-of-day convention of only
+  committing project-context.md/project-memory.md at session close.
+
+**Files changed this session:**
+```
+ brain/actions/limits.yaml       |  16 ++-
+ brain/actions/registry.py       |  60 +++++++++
+ brain/connectors/shopify.py     | 268 +++++++++++++++++++++++++++++++++++++++-
+ hq/actions/capabilities.yaml    |  15 +++
+ hq/actions/log.jsonl            |  27 ++++
+ hq/escalations/queue.md         |  20 +++
+ hq/products/catalog.json        | 111 ++++++++++++++++-
+ hq/products/catalog.md          |  13 +-
+ tests/test_limits.py            |   3 +-
+ tests/test_shopify_connector.py | 260 ++++++++++++++++++++++++++++++++++++++
+ 10 files changed (project-context.md/project-memory.md not yet included above)
+New (untracked): garage/design/push_shopify_product.py,
+ garage/design/pushes/steve-bodysurfer-print.yaml,
+ garage/prints/compose_room_mockup.py, garage/prints/mockup-sources/,
+ garage/prints/mockups/, garage/prints/new-print-intake-checklist.md,
+ hq/actions/snapshots/ACT-2026-W31-{0003,0005,0010,0012,0013,0017}.json
+```
+
+## Session — 2026-07-27 (4 — first native Shopify product: the Steve print)
+
+**Focus:** CEO asked to set up the "Steve" bodysurfer print (cleared the
+print-derivation pipeline 2026-07-25/27) as a real Shopify product — 3
+sizes x 3 FinerWorks papers, CEO to handle no product details personally,
+explicitly not published live.
+
+**Decisions made:**
+- Built a new governed capability, `shopify.create_product`, rather than
+  writing to the live store directly — the executor is the only path to
+  external writes per CLAUDE.md, so this needed a proper registry entry
+  (`brain/actions/registry.py`), a `creative` allowlist grant
+  (`brain/actions/limits.yaml`), a real connector implementation
+  (`brain/connectors/shopify.py`), and regression tests, mirroring how
+  `printful.create_product` was built out originally.
+- Priced all 3 papers the same per size ($29.99/$39.99/$49.99 for
+  8x10/11x14/16x20), anchored to the store's own already-live "Neptune's
+  Garden" cyanotype print ladder — real per-paper FinerWorks costs are
+  still an open gap (`finerworks-paper-recommendation-2026-07-25.md`), so
+  this is a placeholder ladder, not a costed price. Flagged to the CEO for
+  review before publishing.
+- Deliberately did not use the subject's first name ("Steve") anywhere in
+  customer-facing copy — it's the internal file/candidate designation only
+  (`garage/prints/candidates/steve.tif`). Public title: "Bodysurfer,
+  Ventura — Black & White Fine Art Photography Print."
+- Product created with `status: DRAFT` — satisfies "don't go live"; the CEO
+  must publish it manually when ready.
+
+**Problems solved:**
+- `productCreate` with a full `productOptions` matrix does NOT
+  auto-generate the full variant grid — confirmed live, not assumed: a 3x3
+  Size/Paper matrix produced exactly 1 default variant, not 9. First live
+  attempt (ACT-2026-W31-0003) created the product with only 1 of 9 variants
+  priced; caught in post-execute verification (a real Shopify GraphQL query
+  against the created product, not just trusting the dry-run rehearsal).
+  Fixed by adding an explicit `productVariantsBulkCreate` step for every
+  option-value combination Shopify didn't auto-create, each carrying its
+  own `optionValues` (`{optionName, name}` pairs — confirmed via live schema
+  introspection) and price. Properly rolled back the broken first attempt
+  via `Executor.rollback()` (not a raw connector call) so the action log
+  and capability ladder stayed accurate, then re-ran live successfully: all
+  9 variants created and priced correctly, verified via a fresh GraphQL
+  read.
+- Also fixed the long-standing broken `brain.exe` console script (flagged
+  unfixed in the 2026-07-24 memory entry): the editable pip install's path
+  mapping still pointed at the pre-rename `Minivan-Dads` folder name, so
+  `import brain` silently failed outside a cwd-relative context (which is
+  also why my new push script failed at first). `.venv/Scripts/pip install
+  -e ".[dev]"` had no visible output/exit 1 when run directly; running it
+  via `python -m pip install -e ".[dev]"` instead showed the real
+  progress and succeeded. `brain.exe status` now works.
+- Shopify's tag-based product search (used by `restore()` to find a
+  just-created product by its `brain-external-id:<id>` tag) is eventually
+  consistent — a lookup run within seconds of `productCreate` can return no
+  match even though the product exists; the same query succeeded moments
+  later. Documented as a comment in the connector so a future rollback
+  attempted too soon after create isn't mistaken for "nothing to roll back."
+- Confirmed real Shopify GraphQL schema details via live introspection
+  rather than guessing at hypothetical future-API-version behavior:
+  `ProductCreateInput`/`OptionCreateInput`/`ProductVariantsBulkInput`/
+  `VariantOptionValueInput`/`StagedUploadInput`/`CreateMediaInput` field
+  shapes, plus the `productCreate`/`productVariantsBulkCreate`/
+  `stagedUploadsCreate`/`productDelete` mutation signatures — all confirmed
+  against the real store (API version 2026-07) before writing the
+  connector code.
+
+**Approaches discussed:**
+- Considered bypassing the executor and calling the Shopify connector
+  directly (a "garage script" in the spirit of `shopify_token_exchange.py`)
+  since the CEO was directing this live in conversation, but chose to build
+  the real governed capability instead — CLAUDE.md's "executor is the only
+  path to external writes" reads as unconditional, and the existing
+  `push_printful_product.py` driver (dry-run default, `--live --ceo-note`
+  for the CEO-approved real run) was the established precedent to mirror
+  for a first-of-its-kind product creation, not an exception to route
+  around.
+- Image uploads use Shopify's staged-upload flow (`stagedUploadsCreate` +
+  a direct multipart POST to the returned S3/GCS target + `resourceUrl`
+  referenced in `productCreate`'s `media` argument) — no new dependency
+  added; the multipart body is built with stdlib `urllib` only, mirroring
+  the existing connector's dependency-free style.
+
+**Left unresolved:**
+- The draft product itself needs a CEO review pass: title/description
+  wording, and especially the placeholder same-price-per-paper ladder once
+  real FinerWorks per-paper costs exist.
+- Whether/when to publish it is entirely the CEO's call — nothing in this
+  session published anything.
+- This session's code changes (registry/limits/connector/tests/push
+  script/spec file) are uncommitted as of this entry.
+
+**Files changed this session:**
+```
+brain/actions/registry.py            (new shopify.create_product ActionType)
+brain/actions/limits.yaml            (creative allowed_actions += shopify.create_product)
+brain/connectors/shopify.py          (create_product/staged-upload/restore implementation)
+tests/test_shopify_connector.py      (new TestCreateProduct class, 6 tests)
+tests/test_limits.py                 (fixture bump for the new allowlist entry)
+garage/design/push_shopify_product.py        (new — dry-run/--live push driver)
+garage/design/pushes/steve-bodysurfer-print.yaml  (new — product spec)
+hq/products/catalog.json             (refreshed via `brain sync-products`)
+project-context.md, project-memory.md
+```
+Live effect (not a file diff, recorded in `hq/actions/log.jsonl` and on the
+real Shopify store): one real DRAFT product created
+(`bodysurfer-ventura-black-white-fine-art-photography-print`, 9 variants),
+after one bad attempt was created then properly rolled back.
+
 ## Session — 2026-07-27 (3 — portfolio/gallery advisory)
 
 **Focus:** CEO asked whether a coding solution or addon could better showcase
