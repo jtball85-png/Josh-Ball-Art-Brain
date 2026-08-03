@@ -1,6 +1,6 @@
 # Product catalog
 
-_Last synced: 2026-08-03T14:04:26_
+_Last synced: 2026-08-03T14:06:58_
 
 
 ## Original Linocut Print "Lobster Season 2023"  ·  shopify

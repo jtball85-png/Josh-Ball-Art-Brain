@@ -17,3 +17,4 @@
 {"timestamp": "2026-07-24T15:55:06", "command": "meeting", "model": "claude-sonnet-5", "input_tokens": 26438, "output_tokens": 3532, "cache_creation_input_tokens": 3093, "cache_read_input_tokens": 0}
 {"timestamp": "2026-08-03T13:33:41", "command": "ingest", "model": "claude-sonnet-5", "input_tokens": 11274, "output_tokens": 8406, "cache_creation_input_tokens": 3555, "cache_read_input_tokens": 0}
 {"timestamp": "2026-08-03T13:38:06", "command": "meeting", "model": "claude-sonnet-5", "input_tokens": 13261, "output_tokens": 3245, "cache_creation_input_tokens": 3287, "cache_read_input_tokens": 0}
+{"timestamp": "2026-08-03T14:09:48", "command": "agent:storefront", "model": "claude-sonnet-5", "input_tokens": 19150, "output_tokens": 16410, "cache_creation_input_tokens": 53312, "cache_read_input_tokens": 52169}
