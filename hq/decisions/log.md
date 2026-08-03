@@ -148,3 +148,28 @@ Format per entry:
 - Rationale: The 2026-08-03 'Grant storefront the shopify.set_price governed action' entry described adding shopify.set_price to storefront's allowed_actions in limits.yaml. On review, that allowlist absence is the mechanism enforcing 'a price never changes without CEO approval' -- adding it would let storefront's future price proposals execute automatically instead of always escalating, contradicting the charter's money-is-always-CEO-required rule and the storefront directive's own stated design. limits.yaml was left unchanged. The CEO confirmed the actual intent: always approve price changes individually, but once approved, the brain should execute them -- which is exactly what Executor.approve_action() already does per already-escalated action, with no allowlist change needed. The ESC-016 enamel cup reprice ($14.00 -> $19.50) was executed via that one-off override path (ACT-2026-W32-0001), not via a new capability grant.
 - Decided by: CEO
 - Affected departments: storefront
+
+## 2026-08-03 — Fix shopify action-params schema mismatch blocking storefront's proposed actions
+- Rationale: ESC-020 through ESC-023 all failed on the same root cause — storefront emits `external_id`/`prices`/`price` while the executor's action contract requires `product_id`/`new_price` (and `seo` for copy actions). This is an internal tooling correction, not a pricing or publishing judgment, and clears the path for clean resubmission of this cycle's pending actions.
+- Decided by: CEO
+- Affected departments: storefront
+
+## 2026-08-03 — Approve drinkware margin-floor repricing (mug ladder + tumbler)
+- Rationale: Storefront's proposed reprice — Bodysurf Fin Mug and Logo Mug to $12/$14/$16 (11/15/20oz), Sunsets & Sips Tumbler to $26.00 — clears the charter's 30% margin floor against confirmed Printful costs ($6.95–$8.50 for mugs, $17.29 for the tumbler). Execution is held pending resubmission of the actions under the corrected params schema.
+- Decided by: CEO
+- Affected departments: storefront
+
+## 2026-08-03 — Rejected: Publish six draft giclée listings (five Neptune's Garden cyanotype prints + Complete Collection bundle + Bodysurfer B&W print)
+- Rationale: The CEO held this open deliberately — not a finding against the listings themselves or the underlying 2026-07-24 blocking condition, but a decision to first work through how cyanotype prints should be positioned relative to originals before turning these six SKUs into live, priced commerce. The priority-2 revenue line remains at zero live listings until that broader positioning question is resolved.
+- Decided by: CEO
+- Affected departments: storefront
+
+## 2026-08-03 — Approve Bodysurfer print listing copy/title update
+- Rationale: Brings the new giclée print's title and description into required "Josh Ball Art" brand/SEO styling, fulfilling standing order 2's requirement for copy on every new giclée release. Execution awaits resubmission under the corrected action schema.
+- Decided by: CEO
+- Affected departments: storefront
+
+## 2026-08-03 — Approve four "Josh Ball Art" branding renames (mug, beanie, two posters)
+- Rationale: These renames have sat proposed and unexecuted for two consecutive weeks; approved to bring existing live POD listing titles into line with the charter's mandatory "Josh Ball Art" styling rule.
+- Decided by: CEO
+- Affected departments: storefront

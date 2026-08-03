@@ -18,3 +18,5 @@
 {"timestamp": "2026-08-03T13:33:41", "command": "ingest", "model": "claude-sonnet-5", "input_tokens": 11274, "output_tokens": 8406, "cache_creation_input_tokens": 3555, "cache_read_input_tokens": 0}
 {"timestamp": "2026-08-03T13:38:06", "command": "meeting", "model": "claude-sonnet-5", "input_tokens": 13261, "output_tokens": 3245, "cache_creation_input_tokens": 3287, "cache_read_input_tokens": 0}
 {"timestamp": "2026-08-03T14:09:48", "command": "agent:storefront", "model": "claude-sonnet-5", "input_tokens": 19150, "output_tokens": 16410, "cache_creation_input_tokens": 53312, "cache_read_input_tokens": 52169}
+{"timestamp": "2026-08-03T14:12:44", "command": "ingest", "model": "claude-sonnet-5", "input_tokens": 15263, "output_tokens": 8629, "cache_creation_input_tokens": 3555, "cache_read_input_tokens": 0}
+{"timestamp": "2026-08-03T14:17:04", "command": "meeting", "model": "claude-sonnet-5", "input_tokens": 18292, "output_tokens": 5086, "cache_creation_input_tokens": 3287, "cache_read_input_tokens": 0}

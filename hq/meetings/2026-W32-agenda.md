@@ -4,11 +4,11 @@
 
 ### market_intel
 
-A report was filed for 2026-W31 (nothing further came in for W32 itself). The cycle substantially filled the workshop-pricing gap with real Santa Barbara/LA comps ($30–$79/seat for a 2-hour popup, with premium multi-day intensives running as high as $720), surfaced a directly relevant Ventura precedent (Patagonia Ventura's paid cyanotype popup with Oriana Poindexter — a strong template match for the charter's retail-popup format), and flagged a live, no-fee ArtWalk Ventura booth opportunity (Sept 26–27) whose application deadline could not be confirmed and may be closing soon (see ESC-017). Brand watch found no visible search confusion with "Artist Josh Ball" this cycle — a partial close of a previously open gap. Two tool checks (Etsy handle, venturacoldwatercadre.com domain) remain inconclusive on platform/network failures, not findings. No follow-up report came in for W32 itself — the ArtWalk deadline and the standing photography-spend trigger metric (owned by market_intel per the 2026-07-16 decision) remain unconfirmed for a second week, and this data is now aging; that silence matters given the live escalation riding on it.
+No report filed. This silence matters somewhat: ESC-017 (the ArtWalk Ventura booth window with an unconfirmed application deadline) is still open, and a week has now passed with no follow-up check on zapplication.org — the department that raised the time-sensitive flag has gone quiet on it rather than confirming or closing it, which is a real gap worth noting even though last week's report itself was substantive and there's no sign yet of a broader pipeline failure.
 
 ### creative
 
-No report filed. Silence matters: this is the second consecutive missed week for an active, Tier 1 department carrying several open mandates — the backup-handle brand-voice check that's been waiting since creative's 2026-07-19 activation, workshop one-pagers, POD fit-ranking, and the blog backlog — none of which have moved.
+No report filed — this is the second consecutive missed week (W31 and W32) for an active Tier 1 department, and it comes right after the 2026-08-03 decision that specifically ordered a scheduler/agent-health check on creative and storefront for this exact reason. Storefront has since resumed reporting; creative has not. This now reads as more than a one-off miss and warrants a direct check on whether creative's agent is actually running, rather than assuming the prior check resolved it.
 
 ### content
 
@@ -20,7 +20,7 @@ Dormant — no agent active.
 
 ### storefront
 
-No report filed. Silence matters: this is the second consecutive missed week for an active Tier 1 department, and it's sitting on a live, CEO-directed test (ESC-016 — the enamel cup reprice) that's currently blocked on a capability gap, plus the standing inverted-catalog tracking (own-art listings vs. dead Jacquard stock) that has no reported movement.
+Storefront filed a full report this week. Headline: the own-art inversion metric is still stuck at ~3 of ~108 purchasable listings (~2.8%), unchanged from last week, with six giclée drafts (five Neptune's Garden prints, the Complete Collection bundle, and a new Bodysurfer B&W photography print) still unpublished and the entire priority-2 revenue line still at zero live sales. The department delivered the CEO-requested drinkware margin review and proposed a size-ladder reprice for both mugs ($9–13 → $12/14/16) and the tumbler ($19.00 → $26.00) to clear the 30% floor, plus branding-consistency renames carried over from last week (mug, beanie, two posters) and new SEO copy for the Bodysurfer print — but every structured action this cycle (ESC-020 through ESC-023) was rejected by the executor on a params-schema mismatch (agent sent `external_id`/`prices`/`price`; executor expects `product_id`/`new_price`, and copy actions expect `seo`), meaning none of this week's proposed fixes can execute until the schema is corrected and resubmitted. Storefront is also asking, again, for a ruling on the giclée-publish blocker and flagging that sold-out Jacquard hygiene remains unexecutable without inventory-level data in the sync.
 
 ### customer
 
@@ -36,34 +36,49 @@ Dormant — no agent active.
 
 ## Cross-Department Notes
 
-Two active departments (creative, storefront) have now gone silent for two consecutive weekly cycles — worth a direct check on whether their scheduling/agent health is intact rather than assuming it's simply nothing-to-report. Separately, storefront's directive promises that CEO-approved prices execute automatically ("the system applies it"), but ESC-016 shows the executor's allowed-actions list doesn't yet include `shopify.set_price` — a plumbing gap between what the directive promises and what the executor can do, not a department disagreement. No genuine cross-department conflict this cycle; no boardroom topic proposed.
+The only real cross-department item this cycle is procedural, not a conflict: storefront's four proposed actions (ESC-020–023) all failed for the same reason — a params-schema mismatch between what the agent emits and what the executor's action contract requires — which means none of this week's margin-floor or SEO fixes can be applied even if approved as-is; the schema needs aligning before re-proposing, independent of any CEO pricing call. Separately, creative's continued silence has a mild knock-on effect on storefront's own standing orders (print-presentation naming/certificate wording, POD ranking) that creative — not storefront — owns, though storefront hasn't flagged this as blocking its own work this cycle. No genuine conflicting recommendations exist between departments this week.
 
 ## Proposed Decisions
 
-#### Decision: Grant storefront the `shopify.set_price` governed action
-- Recommendation: Authorize adding `shopify.set_price` to storefront's allowed actions so CEO-approved price changes (like the pending enamel cup reprice) execute automatically instead of dead-ending at the executor, matching the directive's stated design.
-- Checklist: money=yes, brand=no, legal=no, irreversible=no
-- Tag: [CEO REQUIRED]
-- Reason: Capability expansion touching a money-moving action requires the explicit per-capability CEO grant the Authority Tiers require, and price-change execution is CEO-only under the charter.
-
-#### Decision: Execute the enamel cup reprice ($14.00 → $19.50) per ESC-016
-- Recommendation: Apply the reprice the CEO already directed on 2026-07-24 (11% margin → 36% margin, above the 30% floor) once the action-capability gap above is resolved.
-- Checklist: money=yes, brand=no, legal=no, irreversible=no
-- Tag: [CEO REQUIRED]
-- Reason: Any price change is a spend/pricing guardrail item requiring explicit CEO sign-off.
-
-#### Decision: Confirm creative and storefront agents are still scheduled and running
-- Recommendation: Two consecutive missed weekly reports from two active departments warrants a straightforward operational check (scheduler/agent health), not a policy change — no CEO judgment call is needed to simply verify the pipeline is intact.
+#### Decision: Fix the shopify action-params schema mismatch blocking storefront's proposed actions
+- Recommendation: Align storefront's action-emission format with the executor's actual action contract (`product_id`/`new_price` for pricing, `product_id`/`seo` for copy) so ESC-020–023 can be correctly resubmitted next cycle; this is an internal tooling correction, not a pricing or publishing decision itself.
 - Checklist: money=no, brand=no, legal=no, irreversible=no
-- Tag: [BRAIN DECIDES]
+- Tag: [CEO REQUIRED]
+- Reason: [auto-upgraded: keyword match on category: legal, spend]
+#### Decision: Approve drinkware margin-floor repricing (mug ladder + tumbler)
+- Recommendation: Approve storefront's proposed reprice — Bodysurf Fin Mug and Logo Mug to $12/$14/$16 (11/15/20oz) and the Sunsets & Sips Tumbler to $26.00 — which clears the 30% margin floor against confirmed Printful costs; resubmission with corrected params is still required before this can execute.
+- Checklist: money=yes, brand=no, legal=no, irreversible=no
+- Tag: [CEO REQUIRED]
+- Reason: Pricing changes are always CEO sign-off under the charter's decision boundaries.
+
+#### Decision: Approve or reject publishing the six draft giclée listings (Neptune's Garden ×5 + Bodysurfer)
+- Recommendation: This question has now sat open since the 2026-07-24 rejection ("charter/brand direction settled first, not a finding against the listings"); with the charter and pivot now well-settled and a second consecutive priority-2 review flagging zero live revenue on this line, recommend the CEO revisit whether the original blocking condition still holds or whether it's time to approve publishing some or all of these six.
+- Checklist: money=yes, brand=no, legal=no, irreversible=no
+- Tag: [CEO REQUIRED]
+- Reason: Publishing sets live prices for the first time on these SKUs — a pricing/commerce commitment reserved to the CEO.
+
+#### Decision: Approve Bodysurfer print listing copy/title update
+- Recommendation: Approve storefront's proposed title/description for the new Bodysurfer print, which brings it into "Josh Ball Art" SEO/brand styling consistent with the charter's naming rule; requires resubmission with corrected params (`product_id`, `seo`) before it can execute.
+- Checklist: money=no, brand=yes, legal=no, irreversible=no
+- Tag: [CEO REQUIRED]
+- Reason: Touches brand-name styling/voice on a public listing, and publishing is CEO-only regardless.
+
+#### Decision: Approve the four carried-over "Josh Ball Art" branding renames (mug, beanie, two posters)
+- Recommendation: Approve these renames, unchanged for two weeks now, to bring existing live POD titles in line with the charter's mandatory "Josh Ball Art" styling.
+- Checklist: money=no, brand=yes, legal=no, irreversible=no
+- Tag: [CEO REQUIRED]
+- Reason: Direct brand-name/styling change on live listings.
 
 ## Escalation Triage
 
 ### Urgent
-- **ESC-017** — ArtWalk Ventura 2026 ($0-fee booth, Sept 26–27) has an unconfirmed application deadline that market_intel flags as possibly closing soon, and no new information came in this cycle to resolve it. Proposed ruling: CEO (or a delegate) checks zapplication.org (event ID 14550) directly this week — this is genuinely time-sensitive and, per Phase 1 limits, is only as urgent as the next command run, so flagging it here doesn't guarantee it's seen before the window closes.
+- **ESC-017** — ArtWalk Ventura 2026 (Sept 26–27, $0 booth fee) has an unconfirmed application deadline that market_intel flagged as possibly closing soon, and no follow-up happened this week. Proposed ruling: CEO or a delegate should check zapplication.org (event ID 14550) directly this week — this cannot wait for next week's meeting without real risk of missing the window. Flagging as urgent per Phase 1 limits: this is only as urgent as the next time this queue is read, no active alert exists.
 
 ### This Meeting
-- **ESC-016** — The CEO's 2026-07-24 directive to reprice the enamel cup is blocked because `shopify.set_price` isn't in storefront's allowed actions; this can wait for this meeting's decision (above) rather than needing action before it. Proposed ruling: approve the capability grant and the reprice together (see Proposed Decisions).
+- **ESC-018** — Six giclée listings still in draft; addressed above as a proposed decision. Ruling needed: publish, hold, or clarify what's actually blocking (Prodigi samples? copy?).
+- **ESC-019** — Drinkware margin-floor breach; addressed above as a proposed decision. Ruling needed: approve the size-ladder reprice.
+- **ESC-020 / ESC-021 / ESC-022** — All three are the same underlying schema-mismatch failure on the drinkware reprice actions (ESC-019's execution mechanics). Proposed ruling: acknowledge as a tooling fix (see Decision above), not a separate CEO judgment call — resubmission will follow once the schema is aligned.
+- **ESC-023** — Bodysurfer copy-action rejected on the same schema mismatch; tied to the copy-approval decision above. Same proposed ruling as ESC-020–022.
 
 ### Defer
-- None.
+- None. All open escalations this cycle are either time-sensitive (ESC-017) or tied directly to this meeting's proposed decisions.

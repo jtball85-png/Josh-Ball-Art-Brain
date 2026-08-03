@@ -161,3 +161,61 @@ Format per entry:
 - Resolved: 2026-08-03
 - Resolution: Capability gap closed (`shopify.set_price` granted to storefront) and the CEO's 2026-07-24 reprice directive approved for execution — enamel cup moves from $14.00 to $19.50 (36% margin).
 - Decided by: CEO
+
+## ESC-018
+- Raised: 2026-08-03
+- Raised by: storefront
+- Urgency: normal
+- Summary: Six giclée listings (five Neptune's Garden cyanotypes + Complete Collection bundle) plus the new Bodysurfer B&W photography print are all still in draft — the entire priority-2 revenue line is unpurchasable. Confirm what's blocking publish (Prodigi sample approval? copy incomplete?) or approve publishing them.
+- Resolved: 2026-08-03
+- Resolution: Rejected — publishing held pending a CEO decision on cyanotype-prints-vs-originals positioning strategy; giclée line remains in draft, no live listings this cycle.
+- Decided by: CEO
+
+## ESC-019
+- Raised: 2026-08-03
+- Raised by: storefront
+- Urgency: normal
+- Summary: Drinkware pricing — Bodysurf Fin Mug and Logo Mug at $9-13 likely breach the 30% margin floor on several size/color combos (cost $6.95-8.50); Tumbler at $19.00 against $17.29 cost is only ~9% margin. Structured shopify.set_price actions with a size-ladder fix are proposed below for approval.
+- Resolved: 2026-08-03
+- Resolution: Approved — mug ladder ($12/14/16) and tumbler ($26.00) reprice clears the 30% margin floor; execution pending schema-corrected resubmission.
+- Decided by: CEO
+
+## ESC-020
+- Raised: 2026-08-03
+- Raised by: executor/storefront
+- Urgency: normal
+- Summary: Action rejected: shopify.set_price — missing params: new_price, product_id; unexpected params: external_id, prices. Agent rationale: Current $9-13 pricing falls under the 30% margin floor on several combos against $6.95-8.50 Printful costs; this ladder clears 30%+ even at worst-case cost per size band.
+- Action ref: ACT-2026-W32-0002
+- Resolved: 2026-08-03
+- Resolution: Acknowledged as tooling issue — schema fix approved; action to be resubmitted with corrected params (`product_id`/`new_price`).
+- Decided by: CEO
+
+## ESC-021
+- Raised: 2026-08-03
+- Raised by: executor/storefront
+- Urgency: normal
+- Summary: Action rejected: shopify.set_price — missing params: new_price, product_id; unexpected params: external_id, prices. Agent rationale: Same blank/cost structure as the Bodysurf Fin Mug (different design only); same margin shortfall, same fix.
+- Action ref: ACT-2026-W32-0003
+- Resolved: 2026-08-03
+- Resolution: Acknowledged as tooling issue — schema fix approved; action to be resubmitted with corrected params (`product_id`/`new_price`).
+- Decided by: CEO
+
+## ESC-022
+- Raised: 2026-08-03
+- Raised by: executor/storefront
+- Urgency: normal
+- Summary: Action rejected: shopify.set_price — missing params: new_price, product_id; unexpected params: external_id, price. Agent rationale: Current $19.00 against $17.29 cost is ~9% margin, far under the 30% floor; $26.00 clears ~33.5% margin while staying close to comparable Printful-tumbler market pricing.
+- Action ref: ACT-2026-W32-0004
+- Resolved: 2026-08-03
+- Resolution: Acknowledged as tooling issue — schema fix approved; action to be resubmitted with corrected params (`product_id`/`new_price`).
+- Decided by: CEO
+
+## ESC-023
+- Raised: 2026-08-03
+- Raised by: executor/storefront
+- Urgency: normal
+- Summary: Action rejected: shopify.update_listing_copy — missing params: product_id, seo; unexpected params: external_id. Agent rationale: Standing order 2 requires SEO/brand-voice copy for every new giclée release; current title has no "Josh Ball Art" styling and no description is confirmed present in the sync.
+- Action ref: ACT-2026-W32-0005
+- Resolved: 2026-08-03
+- Resolution: Acknowledged as tooling issue — schema fix approved; Bodysurfer copy update itself approved, pending resubmission with corrected params (`product_id`/`seo`).
+- Decided by: CEO
