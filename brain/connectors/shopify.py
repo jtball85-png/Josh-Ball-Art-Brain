@@ -16,6 +16,11 @@ Scope of this connector mirrors the registry exactly:
   other money action, so the executor always rejects-and-escalates a
   proposed price change — it only ever runs live via the executor's CEO
   approval override (Executor.approve_action), never autonomously.
+- shopify.set_variant_prices — a per-size price ladder on one product
+  (e.g. a mug priced differently at 11oz/15oz/20oz, same price across
+  every color at a given size), for when set_price's one-flat-price can't
+  express what's needed. Same governance as set_price: absent from every
+  agent's allowed_actions, CEO-approval-only.
 
 Auth: SHOPIFY_ACCESS_TOKEN + SHOPIFY_STORE_DOMAIN from the environment
 (.env). Same injectable-transport pattern as the Printful connector, so
@@ -164,7 +169,7 @@ class ShopifyConnector:
             media = [{"id": e["node"]["id"], "alt": e["node"].get("alt")}
                      for e in product["media"]["edges"]]
             return {"product_id": params["product_id"], "media": media}
-        if action_type.name == "shopify.set_price":
+        if action_type.name in ("shopify.set_price", "shopify.set_variant_prices"):
             variants = [{"id": e["node"]["id"], "price": e["node"]["price"]}
                        for e in product["variants"]["edges"]]
             return {"product_id": params["product_id"], "variants": variants}
@@ -182,6 +187,8 @@ class ShopifyConnector:
             product = self.get_product(params["product_id"])
             variant_ids = [e["node"]["id"] for e in product["variants"]["edges"]]
             return self._update_price(params["product_id"], variant_ids, params["new_price"])
+        if action_type.name == "shopify.set_variant_prices":
+            return self._update_prices_by_size(params["product_id"], params["prices"])
         raise ShopifyError(0, f"unhandled action {action_type.name!r}")
 
     def restore(self, action_type: ActionType, snapshot: dict) -> dict:
@@ -199,7 +206,7 @@ class ShopifyConnector:
             out = self._update_images(snapshot["product_id"], images)
             out["restored"] = "images"
             return out
-        if action_type.name == "shopify.set_price":
+        if action_type.name in ("shopify.set_price", "shopify.set_variant_prices"):
             # Each variant may have had a different price before the change,
             # so restore sets them back individually rather than to one value.
             out = self._update_variant_prices(
@@ -281,6 +288,33 @@ class ShopifyConnector:
         variants = [{"id": vid, "price": price} for vid in variant_ids]
         out = self._update_variant_prices(product_id, variants)
         out["new_price"] = price
+        return out
+
+    def _update_prices_by_size(self, product_id, prices: list[dict]) -> dict:
+        """`prices` is [{"size": <str>, "price": <float>}, ...] — every
+        variant whose Size option matches a given size gets that price,
+        across every color. Looks up variant ids live via get_product() so
+        callers only need to know size labels, not internal variant gids.
+        Fails loudly (never a silent no-op) if a requested size doesn't
+        match any real variant's Size option value."""
+        product = self.get_product(product_id)
+        price_by_size = {p["size"]: f"{float(p['price']):.2f}" for p in prices}
+        variants = []
+        matched_sizes = set()
+        for edge in product["variants"]["edges"]:
+            node = edge["node"]
+            size = next((o["value"] for o in node["selectedOptions"] if o["name"] == "Size"), None)
+            if size in price_by_size:
+                variants.append({"id": node["id"], "price": price_by_size[size]})
+                matched_sizes.add(size)
+        unmatched = set(price_by_size) - matched_sizes
+        if unmatched:
+            raise ShopifyError(
+                0, f"no variants found for size(s) {sorted(unmatched)} on product "
+                   f"{product_id!r} — check the size labels match Shopify's Size option "
+                   f"values exactly")
+        out = self._update_variant_prices(product_id, variants)
+        out["prices_by_size"] = price_by_size
         return out
 
     def _update_variant_prices(self, product_id, variants: list[dict]) -> dict:

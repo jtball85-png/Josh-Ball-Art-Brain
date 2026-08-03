@@ -32,6 +32,18 @@ REGISTRY: dict[str, ActionType] = {
             snapshot_params=("product_id",),
         ),
         ActionType(
+            name="shopify.set_variant_prices",
+            connector="shopify",
+            # A per-size price ladder on one product (e.g. mugs: 11oz/15oz/
+            # 20oz each priced differently) — shopify.set_price above can
+            # only set one flat price for every variant, which can't
+            # express this. `prices` is [{"size": <str>, "price": <float>}]
+            # — every variant whose Size option matches gets that price,
+            # across all colors.
+            params={"product_id": "str", "prices": "list"},
+            snapshot_params=("product_id",),
+        ),
+        ActionType(
             name="shopify.create_discount",
             connector="shopify",
             params={"code": "str", "percent": "float", "expiry": "str"},

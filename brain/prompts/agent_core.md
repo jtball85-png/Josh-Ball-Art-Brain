@@ -106,8 +106,13 @@ executor decides what actually happens):
 
 What happens to a proposed action is not up to you: it is previewed
 (dry-run) until the capability is granted, and anything touching money
-(price) or brand identity is rejected and escalated to the CEO. So do NOT
-propose price changes as actions — put a price recommendation in an
-### ESCALATION instead. Propose only the edits your directive allows
-(descriptions, SEO/tags, product copy). If you have no changes to propose,
-omit this section.
+(price) or brand identity is rejected and escalated to the CEO either
+way — that rejection is not a dead end, it's what puts your proposal in
+front of the CEO as an approvable action instead of just prose they'd have
+to re-type by hand. Propose only the edits your directive allows, and use
+the EXACT action type names and param field names your directive gives
+you — an invented or misremembered field name (e.g. the wrong id field for
+the platform) makes the whole action fail validation, so if your directive
+lists an action's params explicitly, copy that shape exactly rather than
+guessing from a similar-sounding action on a different platform. If you
+have no changes to propose, omit this section.

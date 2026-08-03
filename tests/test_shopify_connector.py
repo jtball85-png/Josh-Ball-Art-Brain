@@ -219,6 +219,81 @@ class TestSetPrice:
         assert out["restored"] == "price"
 
 
+def make_mug_node(pid="8001"):
+    """A 3-size product (no color option) — matches the real Bodysurf Fin/
+    Logo mugs' shape closely enough for the size-matching logic under test."""
+    return {
+        "id": f"gid://shopify/Product/{pid}", "legacyResourceId": pid,
+        "title": "Mug", "handle": "mug", "status": "ACTIVE",
+        "descriptionHtml": "<p>mug</p>",
+        "seo": {"title": "Mug", "description": "meta"},
+        "featuredMedia": {"preview": {"image": {"url": "https://cdn/x.jpg"}}},
+        "media": {"edges": []},
+        "variants": {"edges": [
+            {"node": {"id": "gid://shopify/ProductVariant/1", "legacyResourceId": "1",
+                      "title": "11 oz", "price": "9.00", "sku": "S1",
+                      "selectedOptions": [{"name": "Size", "value": "11 oz"}]}},
+            {"node": {"id": "gid://shopify/ProductVariant/2", "legacyResourceId": "2",
+                      "title": "15 oz", "price": "11.00", "sku": "S2",
+                      "selectedOptions": [{"name": "Size", "value": "15 oz"}]}},
+            {"node": {"id": "gid://shopify/ProductVariant/3", "legacyResourceId": "3",
+                      "title": "20 oz", "price": "13.00", "sku": "S3",
+                      "selectedOptions": [{"name": "Size", "value": "20 oz"}]}},
+        ]},
+    }
+
+
+class TestSetVariantPrices:
+    def test_execute_prices_every_variant_matching_size(self):
+        t = FakeTransport()
+        t.push(200, {"data": {"product": make_mug_node()}})  # get_product for size lookup
+        t.push(200, {"data": {"productVariantsBulkUpdate": {
+            "productVariants": [
+                {"id": "gid://shopify/ProductVariant/1", "price": "12.00"},
+                {"id": "gid://shopify/ProductVariant/2", "price": "14.00"},
+                {"id": "gid://shopify/ProductVariant/3", "price": "16.00"},
+            ], "userErrors": []}}})
+        out = connected(t).execute(REGISTRY["shopify.set_variant_prices"], {
+            "product_id": "8001",
+            "prices": [{"size": "11 oz", "price": 12.0}, {"size": "15 oz", "price": 14.0},
+                      {"size": "20 oz", "price": 16.0}],
+        })
+        sent = t.calls[1]["body"]["variables"]["variants"]
+        assert sent == [
+            {"id": "gid://shopify/ProductVariant/1", "price": "12.00"},
+            {"id": "gid://shopify/ProductVariant/2", "price": "14.00"},
+            {"id": "gid://shopify/ProductVariant/3", "price": "16.00"},
+        ]
+        assert out["variants_priced"] == 3
+
+    def test_unmatched_size_raises_instead_of_silently_no_opping(self):
+        # A label mismatch ("11oz" vs Shopify's real "11 oz" option value)
+        # must be a loud failure, never a silent no-op that looks like success.
+        t = FakeTransport()
+        t.push(200, {"data": {"product": make_mug_node()}})
+        with pytest.raises(ShopifyError, match="no variants found for size"):
+            connected(t).execute(REGISTRY["shopify.set_variant_prices"], {
+                "product_id": "8001",
+                "prices": [{"size": "11oz", "price": 12.0}],
+            })
+
+    def test_snapshot_and_restore_reuse_set_price_shape(self):
+        t = FakeTransport()
+        t.push(200, {"data": {"product": make_mug_node()}})
+        snap = connected(t).read_state(
+            REGISTRY["shopify.set_variant_prices"], {"product_id": "8001"})
+        assert snap["variants"] == [
+            {"id": "gid://shopify/ProductVariant/1", "price": "9.00"},
+            {"id": "gid://shopify/ProductVariant/2", "price": "11.00"},
+            {"id": "gid://shopify/ProductVariant/3", "price": "13.00"},
+        ]
+        t2 = FakeTransport()
+        t2.push(200, {"data": {"productVariantsBulkUpdate": {
+            "productVariants": [], "userErrors": []}}})
+        out = connected(t2).restore(REGISTRY["shopify.set_variant_prices"], snap)
+        assert out["restored"] == "price"
+
+
 class TestProductView:
     def test_normalizes_node_to_unified_view(self):
         view = product_view_from_shopify(make_product_node(),

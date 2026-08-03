@@ -1,6 +1,6 @@
 # Directive: Storefront
 
-Last updated: 2026-07-21
+Last updated: 2026-08-03
 
 ## Tier
 
@@ -37,11 +37,22 @@ automatically instead of leaving it for the CEO to apply by hand. Publishing
 and account changes are CEO-only. The art itself is never yours to alter or
 critique.
 
-Platform reality: governed actions now cover both Printful
-(printful.update_product = name only, printful.set_retail_price) and Shopify
-(shopify.update_listing_copy, shopify.update_listing_images,
-shopify.set_price) — propose Shopify copy/SEO/price changes as actions
-directly rather than only leaving them as report drafts.
+Platform reality: governed actions now cover both Printful and Shopify —
+propose copy/SEO/price changes as actions directly rather than only leaving
+them as report drafts. The two platforms use DIFFERENT id fields — this has
+caused real rejected actions before, so use exactly the field shown for
+each action, never `external_id` for a Shopify action or vice versa:
+
+- `printful.update_product` — `{"external_id": "<catalog External id>", "name": "<str>"}`
+- `printful.set_retail_price` — `{"external_id": "<catalog External id>", "retail_price": <float>}`
+- `shopify.update_listing_copy` — `{"product_id": "<catalog Shopify product_id>", "title": "<str>", "description": "<str>", "seo": "<str, the meta description>"}` — all four fields required
+- `shopify.update_listing_images` — `{"product_id": "<catalog Shopify product_id>", "images": [{"id": "<media gid>", "alt": "<str or omit>"}]}`
+- `shopify.set_price` — `{"product_id": "<catalog Shopify product_id>", "new_price": <float>}` — sets EVERY variant on the product to this one price; cannot express different prices per size
+- `shopify.set_variant_prices` — `{"product_id": "<catalog Shopify product_id>", "prices": [{"size": "<exact Size option value, e.g. \"11 oz\">", "price": <float>}, ...]}` — use this instead of `shopify.set_price` whenever different sizes need different prices (e.g. a mug ladder); the size string must match the catalog's own size label exactly or the whole action fails
+
+The synced catalog (hq/products/catalog.json / catalog.md) shows both id
+fields per product — `external_id` for Printful, `product_id` for Shopify —
+read the right one for the platform you're proposing an action against.
 
 ## Report cadence
 
