@@ -219,3 +219,33 @@ Format per entry:
 - Resolved: 2026-08-03
 - Resolution: Acknowledged as tooling issue — schema fix approved; Bodysurfer copy update itself approved, pending resubmission with corrected params (`product_id`/`seo`).
 - Decided by: CEO
+
+## ESC-024
+- Raised: 2026-08-03
+- Raised by: executor/storefront
+- Urgency: normal
+- Summary: Action rejected: shopify.set_variant_prices — shopify.set_variant_prices is not in storefront's allowed_actions. Agent rationale: CEO-approved 2026-08-03: Bodysurf Fin Mug margin-floor reprice
+- Action ref: ACT-2026-W32-0010
+- Resolved: 2026-08-03
+- Resolution: approved (resubmitted with corrected params, per 2026-08-03 board approval) — executed as ACT-2026-W32-0011
+- Decided by: CEO
+
+## ESC-025
+- Raised: 2026-08-03
+- Raised by: executor/storefront
+- Urgency: normal
+- Summary: Action rejected: shopify.set_variant_prices — shopify.set_variant_prices is not in storefront's allowed_actions. Agent rationale: CEO-approved 2026-08-03: Logo Mug margin-floor reprice
+- Action ref: ACT-2026-W32-0012
+- Resolved: 2026-08-03
+- Resolution: approved (resubmitted with corrected params, per 2026-08-03 board approval) — executed as ACT-2026-W32-0013
+- Decided by: CEO
+
+## ESC-026
+- Raised: 2026-08-03
+- Raised by: executor/storefront
+- Urgency: normal
+- Summary: Action rejected: shopify.set_price — shopify.set_price is not in storefront's allowed_actions. Agent rationale: CEO-approved 2026-08-03: Tumbler margin-floor reprice
+- Action ref: ACT-2026-W32-0014
+- Resolved: 2026-08-03
+- Resolution: approved (resubmitted with corrected params, per 2026-08-03 board approval) — executed as ACT-2026-W32-0015
+- Decided by: CEO

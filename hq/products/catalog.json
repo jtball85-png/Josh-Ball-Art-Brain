@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-03T14:06:58",
+  "generated_at": "2026-08-03T15:22:53",
   "products": [
     {
       "platform": "shopify",
@@ -89,14 +89,14 @@
         "15 oz",
         "20 oz"
       ],
-      "price_range": "$9.00\u2013$13.00",
+      "price_range": "$12.00\u2013$16.00",
       "variants": [
         {
           "color": "Red Yellow",
           "size": "11 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47440851829034,
-          "retail_price": "9.00",
+          "retail_price": "12.00",
           "base_cost": null
         },
         {
@@ -104,7 +104,7 @@
           "size": "15 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47440851894570,
-          "retail_price": "11.00",
+          "retail_price": "14.00",
           "base_cost": null
         },
         {
@@ -112,7 +112,7 @@
           "size": "20 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47440851992874,
-          "retail_price": "13.00",
+          "retail_price": "16.00",
           "base_cost": null
         },
         {
@@ -120,7 +120,7 @@
           "size": "11 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985457962,
-          "retail_price": "9.00",
+          "retail_price": "12.00",
           "base_cost": null
         },
         {
@@ -128,7 +128,7 @@
           "size": "11 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985490730,
-          "retail_price": "9.00",
+          "retail_price": "12.00",
           "base_cost": null
         },
         {
@@ -136,7 +136,7 @@
           "size": "11 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985523498,
-          "retail_price": "9.00",
+          "retail_price": "12.00",
           "base_cost": null
         },
         {
@@ -144,7 +144,7 @@
           "size": "11 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985556266,
-          "retail_price": "9.00",
+          "retail_price": "12.00",
           "base_cost": null
         },
         {
@@ -152,7 +152,7 @@
           "size": "11 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985589034,
-          "retail_price": "9.00",
+          "retail_price": "12.00",
           "base_cost": null
         },
         {
@@ -160,7 +160,7 @@
           "size": "15 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985621802,
-          "retail_price": "11.00",
+          "retail_price": "14.00",
           "base_cost": null
         },
         {
@@ -168,7 +168,7 @@
           "size": "15 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985654570,
-          "retail_price": "11.00",
+          "retail_price": "14.00",
           "base_cost": null
         },
         {
@@ -176,7 +176,7 @@
           "size": "15 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985687338,
-          "retail_price": "11.00",
+          "retail_price": "14.00",
           "base_cost": null
         },
         {
@@ -184,7 +184,7 @@
           "size": "15 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985720106,
-          "retail_price": "11.00",
+          "retail_price": "14.00",
           "base_cost": null
         },
         {
@@ -192,7 +192,7 @@
           "size": "15 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985752874,
-          "retail_price": "11.00",
+          "retail_price": "14.00",
           "base_cost": null
         },
         {
@@ -200,7 +200,7 @@
           "size": "20 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985785642,
-          "retail_price": "13.00",
+          "retail_price": "16.00",
           "base_cost": null
         },
         {
@@ -208,7 +208,7 @@
           "size": "20 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985818410,
-          "retail_price": "13.00",
+          "retail_price": "16.00",
           "base_cost": null
         },
         {
@@ -216,7 +216,7 @@
           "size": "20 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985851178,
-          "retail_price": "13.00",
+          "retail_price": "16.00",
           "base_cost": null
         },
         {
@@ -224,7 +224,7 @@
           "size": "20 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985883946,
-          "retail_price": "13.00",
+          "retail_price": "16.00",
           "base_cost": null
         },
         {
@@ -232,7 +232,7 @@
           "size": "20 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47478985916714,
-          "retail_price": "13.00",
+          "retail_price": "16.00",
           "base_cost": null
         },
         {
@@ -240,7 +240,7 @@
           "size": "11 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47479032742186,
-          "retail_price": "9.00",
+          "retail_price": "12.00",
           "base_cost": null
         },
         {
@@ -248,7 +248,7 @@
           "size": "15 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47479032774954,
-          "retail_price": "11.00",
+          "retail_price": "14.00",
           "base_cost": null
         },
         {
@@ -256,7 +256,7 @@
           "size": "20 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47479032807722,
-          "retail_price": "13.00",
+          "retail_price": "16.00",
           "base_cost": null
         }
       ]
@@ -275,14 +275,14 @@
         "15 oz",
         "20 oz"
       ],
-      "price_range": "$9.00\u2013$13.00",
+      "price_range": "$12.00\u2013$16.00",
       "variants": [
         {
           "color": "",
           "size": "11 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47441226105130,
-          "retail_price": "9.00",
+          "retail_price": "12.00",
           "base_cost": null
         },
         {
@@ -290,7 +290,7 @@
           "size": "15 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47441226137898,
-          "retail_price": "11.00",
+          "retail_price": "14.00",
           "base_cost": null
         },
         {
@@ -298,7 +298,7 @@
           "size": "20 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 47441226170666,
-          "retail_price": "13.00",
+          "retail_price": "16.00",
           "base_cost": null
         }
       ]
@@ -399,14 +399,14 @@
         "Lavender Teal"
       ],
       "sizes": [],
-      "price_range": "$19.00",
+      "price_range": "$26.00",
       "variants": [
         {
           "color": "Black",
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47483965931818,
-          "retail_price": "19.00",
+          "retail_price": "26.00",
           "base_cost": null
         },
         {
@@ -414,7 +414,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47483965964586,
-          "retail_price": "19.00",
+          "retail_price": "26.00",
           "base_cost": null
         },
         {
@@ -422,7 +422,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47483965997354,
-          "retail_price": "19.00",
+          "retail_price": "26.00",
           "base_cost": null
         },
         {
@@ -430,7 +430,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47483966030122,
-          "retail_price": "19.00",
+          "retail_price": "26.00",
           "base_cost": null
         },
         {
@@ -438,7 +438,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47483966062890,
-          "retail_price": "19.00",
+          "retail_price": "26.00",
           "base_cost": null
         },
         {
@@ -446,7 +446,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47483966095658,
-          "retail_price": "19.00",
+          "retail_price": "26.00",
           "base_cost": null
         },
         {
@@ -454,7 +454,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47483966128426,
-          "retail_price": "19.00",
+          "retail_price": "26.00",
           "base_cost": null
         }
       ]

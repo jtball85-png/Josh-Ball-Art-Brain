@@ -1,0 +1,89 @@
+{
+  "product_id": "8871963984170",
+  "variants": [
+    {
+      "id": "gid://shopify/ProductVariant/47440851829034",
+      "price": "9.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47440851894570",
+      "price": "11.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47440851992874",
+      "price": "13.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985457962",
+      "price": "9.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985490730",
+      "price": "9.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985523498",
+      "price": "9.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985556266",
+      "price": "9.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985589034",
+      "price": "9.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985621802",
+      "price": "11.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985654570",
+      "price": "11.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985687338",
+      "price": "11.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985720106",
+      "price": "11.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985752874",
+      "price": "11.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985785642",
+      "price": "13.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985818410",
+      "price": "13.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985851178",
+      "price": "13.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985883946",
+      "price": "13.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47478985916714",
+      "price": "13.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47479032742186",
+      "price": "9.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47479032774954",
+      "price": "11.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47479032807722",
+      "price": "13.00"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "product_id": "8872030306602",
+  "variants": [
+    {
+      "id": "gid://shopify/ProductVariant/47441226105130",
+      "price": "9.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47441226137898",
+      "price": "11.00"
+    },
+    {
+      "id": "gid://shopify/ProductVariant/47441226170666",
+      "price": "13.00"
+    }
+  ]
+}

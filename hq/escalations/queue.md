@@ -24,3 +24,6 @@ position in this file):
 - Urgency: normal
 - Summary: ArtWalk Ventura 2026 (Sept 26–27, Main Street, $0 application fee via ZAPPlication) is a real, on-brand booth opportunity for originals/prints, but the application deadline could not be confirmed from indexed pages and may be close — CEO or a human should check zapplication.org (event ID 14550) directly this week to avoid missing the window.
 
+
+
+

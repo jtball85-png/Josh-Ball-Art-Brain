@@ -1,6 +1,6 @@
 # Product catalog
 
-_Last synced: 2026-08-03T14:06:58_
+_Last synced: 2026-08-03T15:22:53_
 
 
 ## Original Linocut Print "Lobster Season 2023"  ·  shopify
@@ -29,14 +29,14 @@ _Last synced: 2026-08-03T14:06:58_
 - External id: white-glossy-mug-1
 - Colorways: Red Yellow, Peach Burnt Orange, Blue Pink, Peach Blue, Lime Green Electric Blue, Lavender Teal, Black White
 - Sizes: 11 oz, 15 oz, 20 oz
-- Price: $9.00–$13.00
+- Price: $12.00–$16.00
 
 ## Josh Ball Art Logo White Glossy Mug: California Living with Every Sip (Original Design)  ·  shopify
 - Status: active
 - External id: white-glossy-mug
 - Colorways: —
 - Sizes: 11 oz, 15 oz, 20 oz
-- Price: $9.00–$13.00
+- Price: $12.00–$16.00
 
 ## Ride the Foam with Every Sip: Josh Ball Art Bodysurf Fin Enamel Cup  ·  shopify
 - Status: active
@@ -50,7 +50,7 @@ _Last synced: 2026-08-03T14:06:58_
 - External id: wine-tumbler
 - Colorways: Black, Red Yellow, Blue Pink, Peach Blue, Peach Burnt Orange, Lime Green Electric Blue, Lavender Teal
 - Sizes: —
-- Price: $19.00
+- Price: $26.00
 
 ## Shred in Style: Black Fin Bodysurf Cuffed Beanie  ·  shopify
 - Status: active
