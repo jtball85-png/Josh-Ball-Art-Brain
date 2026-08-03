@@ -1,5 +1,5 @@
 # Project Memory
-Last updated: 2026-07-21 (end of day)
+Last updated: 2026-08-03 (end of day)
 
 This file captures decisions, reasoning, and session context that
 project-context.md doesn't hold. It is Claude's memory between sessions.
@@ -22,6 +22,125 @@ Decisions that shaped the project — keep these forever.
 ## Sessions
 
 Most recent session at the top.
+
+## Session — 2026-08-03
+
+**Focus:** Started on "the HQ.bat launcher won't open" troubleshooting;
+expanded into a FinerWorks test-print delivery note, a CEO-requested full
+drinkware pricing review, discovering that CEO-approved board decisions
+weren't actually executing/committing, and fixing a real params-schema bug
+blocking storefront's price actions.
+
+**Decisions made:**
+- CEO wants: once a board meeting closes with approved decisions, those
+  decisions should be committed, pushed, and any approved live action
+  executed immediately — no manual follow-up step. Built as a standing
+  feature: escalations with a pending action are deterministically
+  promoted into ruled agenda items in code (never left to LLM free text),
+  and an "approve" ruling on one replays the action live via the existing
+  CEO-override path at meeting-close time.
+- CEO wants price changes to always require explicit individual approval —
+  never auto-execute from an agent's own proposal — but once approved,
+  execution should be automatic. This explicitly rules out ever granting
+  `shopify.set_price`/`shopify.set_variant_prices` to storefront's
+  allowed_actions permanently (that would remove the human gate); the
+  correct mechanism is the existing CEO-override replay
+  (`Executor.approve_action`), not a capability grant.
+- For the mug price ladder (11oz/15oz/20oz needing different prices), CEO
+  chose to build a real per-variant pricing capability
+  (`shopify.set_variant_prices`) rather than flatten both mugs to one
+  price or leave the reprice blocked.
+- CEO declined to grant storefront a standing capability to publish
+  copy/SEO edits live (the Bodysurfer listing copy update + 4 branding
+  renames) — keeping those preview-only for now; will apply by hand.
+- Corrected a same-day board meeting's decision-log entry that had
+  described "granting storefront the shopify.set_price governed action"
+  as the fix for ESC-016 — that would have let future price proposals
+  auto-execute without CEO review, contradicting the charter's
+  money-is-always-CEO-required rule. Left `limits.yaml` unchanged and
+  executed the one specific approved action via the one-off override path
+  instead; logged the correction as its own append-only decision entry
+  rather than editing history.
+
+**Problems solved:**
+- `Josh Ball Art HQ.bat` failed with "connection refused." Root cause: the
+  venv's editable pip install still pointed `brain` package resolution at
+  the old, renamed-away `Minivan Dads` folder path (a stale finder mapping
+  left over from the 2026-07-21 pivot rename), so `brain.exe` failed
+  instantly and silently on every command. Fixed by reinstalling the
+  package and removing the stale `minivan_dads_brain` install (an interim
+  `pip uninstall` step accidentally deleted the shared `brain.exe`
+  launcher too; a `--force-reinstall --no-deps` pass restored it).
+  Dashboard confirmed working end-to-end afterward.
+- Found a real gap: board-meeting close only recorded CEO decisions as
+  text (decision log + escalation resolution) — it never called the
+  executor to actually run an approved live action, and nothing was ever
+  committed/pushed automatically. Discovered because ESC-016's enamel cup
+  reprice ($14.00→$19.50) was marked "resolved" in the decision log while
+  the live Shopify price stayed at $14.00. Fixed the specific case by hand
+  first, then built the underlying feature.
+- Found and fixed a real params-schema bug: storefront's agent proposed
+  `shopify.set_price` with a size-ladder `prices` dict (a shape that
+  didn't correspond to any real registered action) and used Printful's
+  `external_id` identifier field on Shopify actions, which actually need
+  Shopify's numeric `product_id` — caused ESC-020 through ESC-023 to
+  reject. Root cause: nothing in the agent's prompt context surfaces the
+  real registry's param schemas, so it was guessing from precedent, and
+  the shared base prompt (`agent_core.md`) even told it not to propose
+  prices as actions at all — contradicted by storefront's own directive.
+  Fixed storefront's directive to list every action's exact correct
+  shape, corrected the stale base-prompt line, and built the real
+  `shopify.set_variant_prices` capability the agent had been guessing at.
+
+**Approaches discussed:**
+- Considered relying on the meeting-close LLM synthesis's free-text
+  "Resolved Escalations" section to decide whether to execute a live
+  action, but rejected it — per CLAUDE.md's "governance is code, not
+  prompts," execution must come deterministically from the CEO's
+  structured per-item ruling, never from LLM-synthesized prose.
+- "modify" and "skip" rulings deliberately never auto-execute an
+  escalation-linked action even when an executor is present —
+  `Executor.approve_action()` always replays the exact original
+  proposal's params, and a modified price isn't the original proposal.
+- A failed `git push` after a meeting close is treated as a warning, not
+  a fatal error — a local commit that didn't push is strictly better than
+  losing the record.
+
+**Left unresolved:**
+- Bodysurfer print listing copy/title update and 4 "Josh Ball Art"
+  branding renames (mug, beanie, two posters) remain preview-only
+  (dry-run) — CEO declined to grant storefront a standing capability to
+  publish copy/SEO edits live; will apply by hand.
+- ESC-017 (ArtWalk Ventura 2026 application deadline, event ID 14550)
+  still open and now flagged by the board as aging without follow-up for
+  two cycles.
+- Creative department has now missed two consecutive weekly reports (W31,
+  W32); the board raised an operational/scheduler-health check as a
+  decision but no ruling has actually been made on it yet.
+- The six draft giclée listings (five Neptune's Garden cyanotype prints +
+  Complete Collection bundle + the new Bodysurfer print) remain
+  unpublished — CEO deliberately held this pending a broader
+  cyanotype-vs-originals positioning decision, not a rejection of the
+  listings' merits.
+- FinerWorks physical test prints were delivered today; CEO said they'd
+  review tonight — no feedback captured yet this session.
+
+**Files changed this session:**
+```
+ hq/actions/log.jsonl                        | 10 ++++
+ hq/actions/snapshots/ACT-2026-W32-0011.json | 89 +++++++++++++++++++++++++++++
+ hq/actions/snapshots/ACT-2026-W32-0013.json | 17 ++++++
+ hq/actions/snapshots/ACT-2026-W32-0015.json | 33 +++++++++++
+ hq/escalations/queue.md                     |  3 +
+ hq/escalations/resolved.md                  | 30 ++++++++++
+ hq/products/catalog.json                    | 70 +++++++++++------------
+ hq/products/catalog.md                      |  8 +--
+ 8 files changed, 221 insertions(+), 39 deletions(-)
+```
+(Full session spanned 8 commits: cdd1926, db51f03, 91899c4, 835170b,
+4ae1317, 459a2e8, 112ea3d, c03bb96 — the diffstat above is only the last
+commit per the standard end-of-day command; see `git log` for the full
+session range.)
 
 ## Session — 2026-07-27 (5 — pricing applied, mockups redone twice, image-deletion blocked)
 

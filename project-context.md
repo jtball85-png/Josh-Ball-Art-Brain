@@ -1,5 +1,5 @@
 # Project: Minivan Dads — The Brain (COO)
-Last updated: 2026-07-27 by Claude Code
+Last updated: 2026-08-03 by Claude Code
 
 ## What this project is
 Minivan Dads Inc. is a print-on-demand apparel brand (Printful catalog, "Old Guys Rule" playbook) targeting minivan-driving dads, aiming for $200k+/yr net income or a seven-figure exit. This project is "The Brain" — Phase 1 of a multi-agent company system: a CLI orchestrator (COO) plus HQ, a git-diffable Markdown filesystem that is the company's single source of truth. Future department agents (Market Intel, Creative, Content, Product, Storefront, Customer, Paid Ads, Finance) will read directives from and write reports to HQ in later phases — not built yet, but the Phase 1 design must not box them out.
@@ -46,19 +46,8 @@ The CEO (human) runs CLI commands against HQ:
 Phase 1 complete and acceptance-tested: HQ + all five brain commands, plus the §7 additions from the 7/16 specs — free-text-everywhere CLI with `brain` console script, executor framework (registry/limits/capability ladder/rollback, fake connectors only), boardroom protocol (CLI + dashboard, honesty norm enforced structurally), and the CEO dashboard (four tabs, streaming ask chat, live boardroom). Phase 2 is live: market_intel is active at Tier 0 with a real directive, running Thursday nights via GitHub Actions (secret set, workflow active); its first live report and escalation are in HQ. Phase 3 (Creative + Content) is gated on the Phase 2 exit criteria — a directive change visibly changing the next report, plus a hard shop-open date — which need real calendar weeks and CEO work, not more code. Handoff docs live under `docs/specs/`; roadmap also at `hq/charter/roadmap.md`. 174 tests passing.
 
 ## Where we left off
-Last commit: b5ba04a — End of day 2026-07-27 — context and memory updated
-In progress (uncommitted as of this entry): `brain/actions/limits.yaml`,
-`brain/actions/registry.py`, `brain/connectors/shopify.py`,
-`hq/actions/capabilities.yaml`, `hq/actions/log.jsonl`,
-`hq/escalations/queue.md`, `hq/products/catalog.json`,
-`hq/products/catalog.md`, `tests/test_limits.py`,
-`tests/test_shopify_connector.py`; new untracked files
-`garage/design/push_shopify_product.py`,
-`garage/design/pushes/steve-bodysurfer-print.yaml`,
-`garage/prints/compose_room_mockup.py`, `garage/prints/mockup-sources/`,
-`garage/prints/mockups/`, `garage/prints/new-print-intake-checklist.md`,
-`hq/actions/snapshots/ACT-2026-W31-{0003,0005,0010,0012,0013,0017}.json`.
-368 tests passing.
+Last commit: c03bb96 — Execute the CEO-approved drinkware reprice, live
+In progress: none
 Branch: main
 
 ## What's next
@@ -80,8 +69,6 @@ Branch: main
   comparables, not real invoice costs) — revisit once the CEO has a real
   FinerWorks account.
 - [ ] CEO review owed: `garage/research/joshballart-website-audit-2026-07-26.md` (full site UX/brand/conversion audit) — once back on the desktop computer with the vault passcodes
-- [ ] Desktop's real Shopify/Printful/Anthropic secrets are now pushed to the Bitwarden vault (2026-07-27) — remaining: on the laptop, `bw unlock` + `garage/secrets/pull_env_from_vault.py`, then approve ESC-016 (Enamel Cup $14.00→$19.50, ACT-2026-W30-0014) from the dashboard to actually execute it live
-- [ ] Mug pricing (Bodysurf Fin Mug, Logo Mug) still unresolved — `shopify.set_price` can only set one flat price per product, which would collapse their existing 11/15/20oz price ladder; needs either a per-variant pricing capability or a CEO decision to accept the flattening
 - [ ] CEO-stated 2026-07-23: revisit the board cycle plan next session — the W30 agenda (4 [CEO REQUIRED] decisions) is built but no meeting held; then the brand-redefinition #boardroom, which gates the prints/drinkware naming/description/SEO/pricing pass
 - [ ] CEO review owed: tumbler listing-copy dry-run (ACT-2026-W30-0009), 4 storefront title dry-runs (ACT-2026-W30-0010..0013), and the margin recommendations in `garage/store-review-2026-07-23.md` (tumbler 9%, enamel cup 11% vs the 30% floor)
 - [ ] CEO-owned: open the Etsy shop (step zero — see `docs/design-to-store-pipeline.md`) and connect it to Printful, so the storefront agent's drafted listing copy + the ready-not-wired Etsy connector can go live
@@ -136,6 +123,7 @@ Browser tasks, desktop automation, file management.
 Use project-context-updater.html on Cowork-heavy days.
 
 ## Change log
+- 2026-08-03 — Fixed the `Josh Ball Art HQ.bat` launcher (a stale post-pivot editable-install path was pointing `brain` package resolution at the deleted `Minivan Dads` folder, failing `brain.exe` silently on every command) (cdd1926, db51f03); executed the CEO-approved enamel cup reprice via the executor's CEO-override path and corrected a same-day board-meeting decision-log entry that had mischaracterized the fix as a permanent `shopify.set_price` capability grant — which would have removed the CEO-approval gate on future price proposals (91899c4); ran a CEO-requested full drinkware pricing review through the storefront agent (835170b); built board-meeting-close auto execute+commit+push — an open escalation with a pending action is now deterministically forced into a ruled agenda item in code (never left to LLM free text), and an "approve" ruling replays it live via `Executor.approve_action` the moment the meeting closes, with git commit/push wired into both the CLI and dashboard close paths (4ae1317, 370 tests); committed the CEO's second live W32 board meeting, which approved the drinkware repricing but surfaced a real params-schema bug blocking storefront's proposed price/copy actions (459a2e8); fixed that bug — built the `shopify.set_variant_prices` capability (Shopify only supported one flat price per product; mugs need a per-size ladder) and corrected storefront's directive plus `agent_core.md`'s stale platform-id-field guidance (112ea3d); executed the CEO-approved mug ladder ($12/$14/$16 for 11/15/20oz, both mugs) and tumbler ($19.00→$26.00) reprice live, confirmed via a fresh catalog sync — Source: Claude Code
 - 2026-07-27 (5) — CEO directed live setup of the Steve/bodysurfer print's Shopify pricing and imagery: applied a researched price ladder ($55/$85/$145 by size, uniform across papers) after CEO approval, built and used three new governed capabilities (`shopify.set_variant_prices`, `shopify.add_product_images`, `shopify.remove_product_images` — money/deletion actions absent from every agent's allowed_actions, executed via `Executor.approve_action`); iterated on lifestyle room mockups twice after CEO rejected both attempts (built `garage/prints/compose_room_mockup.py`, researched real coastal-photographer competitor listings and California-Casual interior style for the second attempt) before the CEO asked to strip the listing down to one clean photo with no lifestyle mockups; discovered live that this can't be done via the API — the JBA Brain Shopify app has no `write_files` scope, so both `fileDelete` and the legacy REST image-delete endpoint are blocked, leaving manual deletion or a scope grant as the CEO's only paths forward; naming still undecided (CEO redirected twice, once toward a new standing intake checklist at `garage/prints/new-print-intake-checklist.md`) — Source: Claude Code
 - 2026-07-27 (3) — CEO asked about better showcasing artwork on joshballart.com's portfolio pages; confirmed live site runs Shopify's Dawn theme (supports no-code gallery sections in the theme editor); laid out three options (built-in Dawn sections, a gallery/lightbox app, or a custom-coded Liquid section) referencing the 2026-07-26 site audit's thin-portfolio-page findings; confirmed the Shopify connector has no theme-code capability, so custom code would still need the CEO to paste/publish it in Shopify admin; CEO deferred all three options for now — no changes made — Source: Claude Code
 - 2026-07-27 (checkpoint 2) — Reconciled this laptop's same-day end-of-day with the desktop's (merge, both sessions kept); built a one-click Bitwarden secrets sync (`Sync Bitwarden Secrets.bat` + `garage/secrets/sync_secrets.ps1`) after the manual `bw unlock`/paste flow repeatedly failed (fixed a PowerShell stderr-as-terminating-error bug, switched from stdin piping to `bw`'s `--passwordenv` flag, added a missing `bw sync` step for stale local vault cache); confirmed all 9 real secrets now on this laptop and that CEO-approved live Shopify/Printful actions can execute from either computer, governance unchanged — Source: Claude Code
