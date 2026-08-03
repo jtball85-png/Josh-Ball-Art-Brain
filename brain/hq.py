@@ -211,6 +211,12 @@ class HQ:
     def _product_catalog_path(self) -> Path:
         return self.root / "products" / "catalog.json"
 
+    def product_catalog_paths(self) -> tuple[Path, Path]:
+        """(json, md) paths of the product catalog snapshot — for callers
+        that need to know what to commit after a sync, not just read it."""
+        json_path = self._product_catalog_path()
+        return json_path, json_path.with_suffix(".md")
+
     def read_product_catalog(self) -> dict:
         """The last-synced product snapshot, or an empty catalog if never
         synced. Read-only, no API call — the dashboard and agents read this

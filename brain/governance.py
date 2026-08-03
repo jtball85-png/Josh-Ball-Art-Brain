@@ -27,6 +27,17 @@ TAG_LINE_RE = re.compile(r"^- Tag:\s*\[(BRAIN DECIDES|CEO REQUIRED)\]\s*$", re.M
 CHECKLIST_LINE_RE = re.compile(r"^- Checklist:\s*(.+)$", re.MULTILINE)
 RECOMMENDATION_LINE_RE = re.compile(r"^- Recommendation:\s*(.*)$", re.MULTILINE)
 REASON_LINE_RE = re.compile(r"^- Reason:.*$", re.MULTILINE)
+ESCALATION_REF_LINE_RE = re.compile(r"^- Escalation ref:\s*(ESC-\d+)\s*$", re.MULTILINE)
+
+
+def extract_escalation_ref(block_text: str) -> str | None:
+    """A decision block carrying `- Escalation ref: ESC-XXX` links to a
+    specific open escalation with a pending live action — see
+    meeting.py's `_inject_escalation_decisions`/`commit_close`, which use
+    this to decide, deterministically, whether the CEO's ruling on this
+    item should replay the action via the executor."""
+    m = ESCALATION_REF_LINE_RE.search(block_text)
+    return m.group(1) if m else None
 
 CEO_REQUIRED = "CEO REQUIRED"
 BRAIN_DECIDES = "BRAIN DECIDES"
@@ -161,6 +172,12 @@ def enforce_tier(decision: ParsedDecision) -> EnforcedDecision:
     keyword_hits = classify_forced_categories(f"{decision.title} {decision.recommendation}")
     if keyword_hits:
         reasons.append(f"keyword match on category: {', '.join(sorted(keyword_hits))}")
+
+    # Belt-and-suspenders: a decision block linked to an escalation's
+    # pending live action is always CEO required, regardless of checklist —
+    # even though meeting.py already hardcodes this at injection time.
+    if extract_escalation_ref(decision.block_text):
+        reasons.append("linked to an escalation's pending live action")
 
     if reasons:
         return EnforcedDecision(

@@ -8,11 +8,17 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
+from brain.actions.limits import AgentLimits
+from brain.actions.models import ActionIntent, ActionType
 from brain.dashboard.app import create_app
 from brain.dashboard.chat import register_chat_routes
+from brain.executor import Executor
+from brain.hq import HQ
 from brain.meeting import MeetingSession, render_rulings
-from brain.models import MeetingRuling
+from brain.models import DepartmentConfig, MeetingRuling
+from tests.fake_connector import FakeConnector
 from tests.fake_llm import FakeLLM
+from tests.test_sync_and_discuss import git, synced_repos  # noqa: F401 (fixture)
 
 
 class DashFakeLLM(FakeLLM):
@@ -186,6 +192,80 @@ class TestMeetingFlow:
 
         assert client.post("/api/meeting/abandon").json() == {"abandoned": True}
         assert client.post("/api/meeting/start").json()["resumed"] is False
+
+
+FAKE_REGISTRY = {
+    "fake.set_price": ActionType(
+        name="fake.set_price", connector="fake",
+        params={"target_id": "str", "new_value": "float"}, snapshot_params=("target_id",),
+    ),
+}
+
+
+class TestMeetingCloseExecutesAndPushes:
+    """End-to-end through the dashboard: closing a meeting that approves an
+    escalation-linked action must execute it live AND commit/push — the gap
+    discovered 2026-08-03 (a meeting recorded 'approved' in text while the
+    live price never changed, and nothing was committed)."""
+
+    def test_approve_executes_and_pushes(self, config, synced_repos, monkeypatch, tmp_path):
+        clone, origin = synced_repos
+        monkeypatch.setenv("BRAIN_ROOT", str(clone))
+        config.departments["storefront"] = DepartmentConfig(
+            name="storefront", tier=1, status="active", report_cadence="weekly"
+        )
+        hq = HQ(config)
+        (hq.root / "charter" / "tiers.md").write_text("# Tiers", encoding="utf-8")
+        prompts = config.prompts_root
+        prompts.mkdir(parents=True, exist_ok=True)
+        for name in ("system_core.md", "meeting_synthesis.md"):
+            (prompts / name).write_text(f"# {name}", encoding="utf-8")
+
+        connector = FakeConnector()
+        executor = Executor(
+            hq=hq, registry=FAKE_REGISTRY,
+            limits={"storefront": AgentLimits(allowed_actions=[])},
+            capabilities={}, connectors={"fake": connector},
+            capabilities_path=tmp_path / "capabilities.yaml", env={},
+        )
+        rejected = executor.submit(ActionIntent(
+            agent="storefront", action_type="fake.set_price",
+            params={"target_id": "P1", "new_value": 19.5}, rationale="Reprice needed",
+        ))
+        esc_id = next(e.id for e in hq.read_escalation_queue() if e.action_ref == rejected.id)
+
+        hq.write_agenda(hq.current_week_key(), (
+            "# Board Meeting Agenda — W1\n\n## Department Syntheses\n\n"
+            "### storefront\n\nReprice pending.\n\n"
+            "## Proposed Decisions\n\n"
+            f"#### Decision: Approve pending action for {esc_id}\n"
+            "- Recommendation: Approve it.\n"
+            "- Checklist: money=yes, brand=no, legal=no, irreversible=no\n"
+            "- Tag: [CEO REQUIRED]\n"
+            f"- Escalation ref: {esc_id}\n\n"
+            "## Escalation Triage\n\n### Urgent\n- None.\n"
+        ))
+
+        llm = DashFakeLLM(responses=[
+            "## Minutes\n\nApproved the reprice.\n\n"
+            "## Decision Log Entries\n\n## Directive Updates\n\nNone.\n\n"
+            "## Resolved Escalations\n\nNone.\n"
+        ])
+        app = create_app(config, hq, executor)
+        register_chat_routes(app, config, hq, make_llm=lambda command=None: llm, executor=executor)
+        client = TestClient(app)
+
+        client.post("/api/meeting/start")
+        client.post("/api/meeting/ruling", json={"item_id": 0, "action": "approve"})
+        result = client.post("/api/meeting/close", json={"ratifications": {}}).json()
+
+        assert result["executed_actions"], result
+        assert result["committed"] is True
+        assert result["pushed"] is True
+        assert [c[0] for c in connector.calls] == ["read_state", "execute"]
+        assert esc_id not in [e.id for e in hq.read_escalation_queue()]
+        log = git("log", "origin/main", "-1", "--format=%s", cwd=clone)
+        assert "Board meeting" in log.stdout
 
 
 class TestConsult:

@@ -143,9 +143,12 @@ COMMAND_HELP = [
 ]
 
 
-def register_chat_routes(app: FastAPI, config: BrainConfig, hq: HQ, make_llm) -> None:
+def register_chat_routes(app: FastAPI, config: BrainConfig, hq: HQ, make_llm, executor=None) -> None:
     """`make_llm` is a zero-arg factory returning an object with
-    stream()/call() — the real LLM in production, a fake in tests."""
+    stream()/call() — the real LLM in production, a fake in tests.
+    `executor`, if given, lets a closed meeting replay CEO-approved
+    escalation actions live (see meeting_close below) — None (no live
+    connectors configured) just skips execution, same as the CLI path."""
 
     @app.post("/api/ask")
     def ask(body: AskRequest):
@@ -543,15 +546,34 @@ def register_chat_routes(app: FastAPI, config: BrainConfig, hq: HQ, make_llm) ->
         summary = session.commit_close(
             prepared,
             ratify_fn=lambda dept, change: bool(body.ratifications.get(dept)),
+            executor=executor,
         )
         meeting_state["session"] = None
         meeting_state["prepared"] = None
+
+        from brain.config import find_repo_root
+        from brain.git_sync import commit_and_push
+        message = (
+            f"Board meeting {session.week} closed — {summary['decisions']} decision(s), "
+            f"{summary['escalations_resolved']} escalation(s) resolved"
+            + (f", {len(summary['executed_actions'])} action(s) executed"
+               if summary["executed_actions"] else "")
+            + "\n\nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+        )
+        git_result = commit_and_push(find_repo_root(), summary["changed_paths"], message)
+        warnings = list(summary["warnings"])
+        if git_result["warning"]:
+            warnings.append(git_result["warning"])
+
         return {
             "minutes_path": str(summary["minutes_path"]),
             "decisions": summary["decisions"],
             "directives_updated": summary["directives_updated"],
             "escalations_resolved": summary["escalations_resolved"],
-            "warnings": summary["warnings"],
+            "executed_actions": summary["executed_actions"],
+            "committed": git_result["committed"],
+            "pushed": git_result["pushed"],
+            "warnings": warnings,
         }
 
     @app.post("/api/meeting/abandon")

@@ -15,8 +15,10 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 
+from brain.actions.models import ActionResult
 from brain.config import BrainConfig
-from brain.governance import DECISION_HEADING_RE
+from brain.executor import Executor
+from brain.governance import DECISION_HEADING_RE, extract_escalation_ref
 from brain.hq import HQ
 from brain.interaction import Exchange, render_exchanges
 from brain.llm import LLM
@@ -29,6 +31,8 @@ from brain.records import (
     split_sections,
     tier_or_status_changed,
 )
+
+PROPOSED_DECISIONS_HEADING_RE = re.compile(r"^## Proposed Decisions\s*$", re.MULTILINE)
 
 MEETING_OUTPUT_SECTIONS = ["Minutes", "Decision Log Entries", "Directive Updates", "Resolved Escalations"]
 # Split ONLY on the four known section headings — directive content inside
@@ -61,6 +65,7 @@ class AgendaItem:
     tag: str  # "BRAIN DECIDES" | "CEO REQUIRED" | ""
     ruling: MeetingRuling | None = None
     discussion: list[Exchange] = field(default_factory=list)
+    escalation_ref: str | None = None  # ESC-XXX this item resolves, if any
 
 
 class MeetingSession:
@@ -95,6 +100,7 @@ class MeetingSession:
                 title=m.group(1).strip(),
                 block_text=block_text,
                 tag=tag_m.group(1) if tag_m else "",
+                escalation_ref=extract_escalation_ref(block_text),
             ))
         return self.items
 
@@ -178,15 +184,84 @@ class MeetingSession:
             "missing_sections": [],
         }
 
-    def commit_close(self, prepared: dict, ratify_fn=None) -> dict:
+    def _execute_ruled_escalations(self, executor: Executor) -> tuple[set[str], list[str], list[str]]:
+        """For every ruled agenda item linked to an escalation
+        (item.escalation_ref), decide execution from the CEO's structured
+        ruling alone — never from LLM-synthesized text. 'approve' replays
+        the pending action for real via Executor.approve_action() (the
+        same CEO-override primitive the dashboard's single-escalation
+        approve button uses) and resolves the escalation; 'reject' denies
+        it with no execution. 'modify'/'skip' are deliberately left alone
+        here — approve_action() always replays the ORIGINAL rejected
+        action's exact params, and a modified price is not the
+        department's original proposal, so it falls through to the
+        free-text Resolved Escalations path unchanged.
+
+        Returns (handled_escalation_ids, executed_action_ids, warnings)."""
+        handled: set[str] = set()
+        executed: list[str] = []
+        warnings: list[str] = []
+        open_escalations = {e.id: e for e in self.hq.read_escalation_queue()}
+
+        for item in self.items:
+            if not item.escalation_ref:
+                continue
+            ruling = item.ruling or MeetingRuling(item_title=item.title, action="skip")
+            if ruling.action not in ("approve", "reject"):
+                continue
+
+            esc = open_escalations.get(item.escalation_ref)
+            if esc is None:
+                warnings.append(f"{item.escalation_ref}: no longer in the open queue — skipped")
+                continue
+
+            if ruling.action == "reject":
+                try:
+                    self.hq.resolve_escalation(
+                        esc.id, resolution="denied by CEO at board meeting", decided_by="CEO"
+                    )
+                    handled.add(esc.id)
+                except ValueError as e:
+                    warnings.append(f"{esc.id}: {e}")
+                continue
+
+            # approve
+            if not esc.action_ref:
+                warnings.append(f"{esc.id}: approved but has no pending action to execute")
+                continue
+            try:
+                record = executor.approve_action(esc.action_ref, escalation_id=esc.id)
+            except ValueError as e:
+                warnings.append(f"{esc.id}: {e}")
+                continue
+            if record.result == ActionResult.EXECUTED:
+                resolution = f"approved at board meeting — executed as {record.id}"
+                executed.append(record.id)
+            else:
+                resolution = (
+                    f"approved at board meeting — execution failed: {'; '.join(record.reasons)}"
+                )
+            self.hq.resolve_escalation(esc.id, resolution=resolution, decided_by="CEO")
+            handled.add(esc.id)
+
+        return handled, executed, warnings
+
+    def commit_close(self, prepared: dict, ratify_fn=None, executor: Executor | None = None) -> dict:
         """All HQ writes for a prepared close. `ratify_fn(dept, change) ->
-        bool` gates tier/status changes; default declines (never silent)."""
+        bool` gates tier/status changes; default declines (never silent).
+        `executor`, if given, replays any CEO-approved escalation actions
+        live (see `_execute_ruled_escalations`) — omit it (default None)
+        to skip execution entirely, e.g. when no live connectors are
+        configured. `changed_paths` in the return value is every HQ file
+        this close touched, for the caller to commit/push."""
         if prepared.get("missing_sections"):
             # Don't lose the meeting: raw output becomes the minutes.
             path = self.hq.write_minutes(self.week, prepared["raw_output"])
             return {
                 "minutes_path": path,
                 "decisions": 0, "directives_updated": [], "escalations_resolved": 0,
+                "executed_actions": [],
+                "changed_paths": [path],
                 "warnings": [
                     f"synthesis output missing sections {prepared['missing_sections']} — "
                     f"raw output saved as minutes; records NOT auto-applied, review manually"
@@ -201,8 +276,12 @@ class MeetingSession:
         minutes_path = self.hq.write_minutes(
             self.week, f"# Board Meeting Minutes — {self.week}\n\n{sections['Minutes']}\n"
         )
+        changed_paths = [minutes_path]
+
         for entry in prepared["entries"]:
             self.hq.append_decision(entry)
+        if prepared["entries"]:
+            changed_paths.append(self.hq.root / "decisions" / "log.md")
 
         written = []
         for dept, content in prepared["updates"].items():
@@ -213,28 +292,95 @@ class MeetingSession:
                     f"({change}) the CEO did not ratify — skipped"
                 )
                 continue
-            self.hq.write_directive(dept, content)
+            path = self.hq.write_directive(dept, content)
             written.append(dept)
+            changed_paths.append(path)
+
+        handled_by_ruling: set[str] = set()
+        executed_actions: list[str] = []
+        if executor is not None:
+            handled_by_ruling, executed_actions, exec_warnings = self._execute_ruled_escalations(executor)
+            warnings.extend(exec_warnings)
 
         resolved = 0
         for m in RESOLVED_LINE_RE.finditer(sections["Resolved Escalations"]):
+            esc_id = m.group(1)
+            if esc_id in handled_by_ruling:
+                continue  # already handled deterministically above — avoid double-resolve
             try:
-                self.hq.resolve_escalation(m.group(1), resolution=m.group(2).strip(),
+                self.hq.resolve_escalation(esc_id, resolution=m.group(2).strip(),
                                            decided_by="CEO")
                 resolved += 1
             except ValueError as e:
                 warnings.append(f"{e} — skipped")
+        resolved += len(handled_by_ruling)
+
+        if handled_by_ruling or resolved:
+            changed_paths += [
+                self.hq.root / "escalations" / "queue.md",
+                self.hq.root / "escalations" / "resolved.md",
+            ]
+
+        if executed_actions:
+            changed_paths += [self.hq.actions_log_path(), self.hq.llm_usage_log_path()]
+            changed_paths += [self.hq.snapshot_path(action_id) for action_id in executed_actions]
+            # Refresh the committed catalog so it reflects the live price
+            # change immediately, not after the next manual sync-products.
+            from brain.main import sync_products  # local import: main.py imports meeting.py
+            sync_products(self.hq, executor.connectors)
+            changed_paths += list(self.hq.product_catalog_paths())
 
         return {
             "minutes_path": minutes_path,
             "decisions": len(prepared["entries"]),
             "directives_updated": written,
             "escalations_resolved": resolved,
+            "executed_actions": executed_actions,
+            "changed_paths": changed_paths,
             "warnings": warnings,
         }
 
-    def close(self, ratify_fn=None) -> dict:
-        return self.commit_close(self.prepare_close(), ratify_fn)
+    def close(self, ratify_fn=None, executor: Executor | None = None) -> dict:
+        return self.commit_close(self.prepare_close(), ratify_fn, executor=executor)
+
+
+def _inject_escalation_decisions(raw_agenda: str, hq: HQ) -> str:
+    """Deterministically force every open escalation with a pending live
+    action (EscalationItem.action_ref set) into its own ruled decision
+    block, in code — never left to the ingest LLM's judgment about what
+    belongs in Escalation Triage vs. Proposed Decisions. This is what lets
+    MeetingSession.commit_close know, from the CEO's structured ruling
+    alone, whether to replay the action via the executor (governance is
+    code, not prompts). Dedupes on the literal 'Escalation ref: ESC-XXX'
+    substring so an LLM that already surfaced one isn't duplicated."""
+    open_with_action = [e for e in hq.read_escalation_queue() if e.action_ref]
+    if not open_with_action:
+        return raw_agenda
+
+    actions_by_id = {a.id: a for a in hq.read_actions()}
+    blocks = []
+    for esc in open_with_action:
+        if f"Escalation ref: {esc.id}" in raw_agenda:
+            continue
+        action = actions_by_id.get(esc.action_ref)
+        pending = f"{action.action_type} {action.params}" if action else esc.action_ref
+        blocks.append(
+            f"\n#### Decision: Approve pending action for {esc.id} ({esc.raised_by})\n"
+            f"- Recommendation: {esc.summary} Pending action: {pending}.\n"
+            f"- Checklist: money=yes, brand=no, legal=no, irreversible=no\n"
+            f"- Tag: [CEO REQUIRED]\n"
+            f"- Reason: escalation-linked live action — always CEO required, forced in code\n"
+            f"- Escalation ref: {esc.id}\n"
+        )
+    if not blocks:
+        return raw_agenda
+
+    injected = "".join(blocks)
+    heading_m = PROPOSED_DECISIONS_HEADING_RE.search(raw_agenda)
+    if heading_m:
+        insert_at = heading_m.end()
+        return raw_agenda[:insert_at] + "\n" + injected + raw_agenda[insert_at:]
+    return raw_agenda.rstrip("\n") + "\n\n## Proposed Decisions\n" + injected
 
 
 def run_ingest(hq: HQ, llm: LLM, config: BrainConfig, print_fn=print) -> dict:
@@ -263,6 +409,7 @@ def run_ingest(hq: HQ, llm: LLM, config: BrainConfig, print_fn=print) -> dict:
             f"agenda; nothing written (see LLMTruncated in brain/llm.py for the "
             f"usual cause).")
 
+    raw_agenda = _inject_escalation_decisions(raw_agenda, hq)
     corrected_agenda, enforced = apply_governance(raw_agenda)
     upgrades = [e for e in enforced if e.upgraded]
     path = hq.write_agenda(week, corrected_agenda)

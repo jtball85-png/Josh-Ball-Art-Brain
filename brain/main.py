@@ -161,7 +161,7 @@ def cmd_ingest(hq: HQ, llm: LLM, config: BrainConfig) -> None:
 RULING_OPTIONS = {"a": "approve", "m": "modify", "r": "reject", "s": "skip"}
 
 
-def cmd_meeting(hq: HQ, llm: LLM, config: BrainConfig) -> None:
+def cmd_meeting(hq: HQ, llm: LLM, config: BrainConfig, executor=None) -> None:
     from brain.meeting import MeetingSession
 
     session = MeetingSession(llm, config, hq)
@@ -196,14 +196,30 @@ def cmd_meeting(hq: HQ, llm: LLM, config: BrainConfig) -> None:
               f"change ({change}). Tier changes are explicit board decisions.")
         return input(f"Ratify this change for {dept} now? [y/N] ").strip().lower() == "y"
 
-    summary = session.close(ratify_fn=cli_ratify)
+    summary = session.close(ratify_fn=cli_ratify, executor=executor)
     print(f"Minutes written: {summary['minutes_path']}")
     print(f"Decision log entries appended: {summary['decisions']}")
     for dept in summary["directives_updated"]:
         print(f"Directive updated: {dept}")
     print(f"Escalations resolved: {summary['escalations_resolved']}")
+    for action_id in summary["executed_actions"]:
+        print(f"Action executed live: {action_id}")
     for warning in summary["warnings"]:
         print(f"  Warning: {warning}.")
+
+    from brain.config import find_repo_root
+    from brain.git_sync import commit_and_push
+    message = (
+        f"Board meeting {session.week} closed — {summary['decisions']} decision(s), "
+        f"{summary['escalations_resolved']} escalation(s) resolved"
+        + (f", {len(summary['executed_actions'])} action(s) executed" if summary["executed_actions"] else "")
+        + "\n\nCo-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+    )
+    git_result = commit_and_push(find_repo_root(), summary["changed_paths"], message)
+    if git_result["committed"]:
+        print(f"Committed{' and pushed' if git_result['pushed'] else ' (push pending)'}.")
+    if git_result["warning"]:
+        print(f"  Warning: {git_result['warning']}.")
 
 
 def cmd_directive(hq: HQ, llm: LLM, config: BrainConfig, department: str) -> None:
@@ -322,7 +338,8 @@ def cmd_dashboard(hq: HQ, config: BrainConfig, host: str, port: int) -> None:
     chat_error: str | None = None
     try:
         from brain.dashboard.chat import register_chat_routes
-        register_chat_routes(app, config, hq, make_llm=lambda command=None: LLM(config, hq, command))
+        register_chat_routes(app, config, hq, make_llm=lambda command=None: LLM(config, hq, command),
+                             executor=executor)
     except Exception:
         chat_error = traceback.format_exc()
         log_path = hq.root.parent / "dashboard_startup.log"
@@ -667,7 +684,8 @@ def cli() -> None:
         cmd_ingest(hq, llm, config)
     elif args.command == "meeting":
         llm = LLM(config, hq, command="meeting")
-        cmd_meeting(hq, llm, config)
+        executor = build_executor(hq, build_connectors())
+        cmd_meeting(hq, llm, config, executor)
     elif args.command == "directive":
         llm = LLM(config, hq, command="directive")
         cmd_directive(hq, llm, config, args.department)
