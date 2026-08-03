@@ -1,6 +1,6 @@
 # Product catalog
 
-_Last synced: 2026-07-23T16:27:14_
+_Last synced: 2026-08-03T14:04:26_
 
 
 ## Original Linocut Print "Lobster Season 2023"  ·  shopify
@@ -43,7 +43,7 @@ _Last synced: 2026-07-23T16:27:14_
 - External id: ride-the-foam-with-every-sip-josh-ball-art-bodysurf-fin-enamel-cup
 - Colorways: Black, Red Yellow, Blue Pink, Peach Blue, Peach Burnt Orange, Lime Green Electric Blue, Lavender Teal
 - Sizes: —
-- Price: $14.00
+- Price: $19.50
 
 ## Sunsets & Sips: Josh Ball Art Bodysurf Fin Tumbler  ·  shopify
 - Status: active
@@ -140,8 +140,8 @@ _Last synced: 2026-07-23T16:27:14_
 - Status: active
 - External id: solarfast-film
 - Colorways: —
-- Sizes: —
-- Price: $18.99
+- Sizes: 8 Pack, 100 Pack
+- Price: $18.99–$125.99
 
 ## Marbling Class Pack  ·  shopify
 - Status: active
@@ -630,7 +630,7 @@ _Last synced: 2026-07-23T16:27:14_
 - Status: active
 - External id: carrageenan
 - Colorways: —
-- Sizes: 4 Oz, 8 Oz, 1 Lb
+- Sizes: 4 oz, 8 oz, 1 lb
 - Price: $29.99–$65.99
 
 ## Neopaque 8-Color Set  ·  shopify
@@ -751,3 +751,10 @@ _Last synced: 2026-07-23T16:27:14_
 - Colorways: JFC1002 Sunbright Yellow, JFC1003 Tangerine, JFC1004 Golden Yellow, JFC1005 Calabaza Orange, JFC1006 Pink, JFC1007 Santa Fe Red, JFC1008 Coral, JFC1009 Chili Pepper, JFC1011 Señorita Magenta, JFC1013 Passion Purple, JFC1015 Sangria, JFC1016 Blue-Violet, JFC1017 Sapphire Blue, JFC1019 Baja Blue, JFC1020 Teal, JFC1021 Lime Green, JFC1022 Aqua, JFC1023 Rainforest Green, JFC1025 Burro Brown, JFC1027 Havana Brown, JFC1029 Shadow Grey, JFC1030 Blanco Blanco, JFC1031 Mantilla Black, JFC1032 Rich Gold, JFC1033 Silver, JFC1034 Copper, JFC1035 Brass, JFC1036 Pearl, JFC1037 Opal, JFC1039 Rose Gold, JFC1040 Bronze, JFC1041 Gold Leaf
 - Sizes: —
 - Price: $4.29–$4.99
+
+## Bodysurfer, Ventura — Black & White Fine Art Photography Print  ·  shopify
+- Status: draft
+- External id: bodysurfer-ventura-black-white-fine-art-photography-print
+- Colorways: —
+- Sizes: 8x10, 11x14, 16x20
+- Price: $55.00–$145.00

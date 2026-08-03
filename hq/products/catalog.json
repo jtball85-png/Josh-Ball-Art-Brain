@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-23T16:27:14",
+  "generated_at": "2026-08-03T14:04:26",
   "products": [
     {
       "platform": "shopify",
@@ -321,14 +321,14 @@
         "Lavender Teal"
       ],
       "sizes": [],
-      "price_range": "$14.00",
+      "price_range": "$19.50",
       "variants": [
         {
           "color": "Black",
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47480961204522,
-          "retail_price": "14.00",
+          "retail_price": "19.50",
           "base_cost": null
         },
         {
@@ -336,7 +336,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47480961237290,
-          "retail_price": "14.00",
+          "retail_price": "19.50",
           "base_cost": null
         },
         {
@@ -344,7 +344,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47480961270058,
-          "retail_price": "14.00",
+          "retail_price": "19.50",
           "base_cost": null
         },
         {
@@ -352,7 +352,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47480961302826,
-          "retail_price": "14.00",
+          "retail_price": "19.50",
           "base_cost": null
         },
         {
@@ -360,7 +360,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47480961335594,
-          "retail_price": "14.00",
+          "retail_price": "19.50",
           "base_cost": null
         },
         {
@@ -368,7 +368,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47480961368362,
-          "retail_price": "14.00",
+          "retail_price": "19.50",
           "base_cost": null
         },
         {
@@ -376,7 +376,7 @@
           "size": "",
           "catalog_variant_id": null,
           "sync_variant_id": 47480961401130,
-          "retail_price": "14.00",
+          "retail_price": "19.50",
           "base_cost": null
         }
       ]
@@ -2463,15 +2463,26 @@
       "thumbnail_url": "https://cdn.shopify.com/s/files/1/0710/9722/1418/files/SolarFast_Film-Wash.jpg?v=1752268639",
       "url": null,
       "colorways": [],
-      "sizes": [],
-      "price_range": "$18.99",
+      "sizes": [
+        "8 Pack",
+        "100 Pack"
+      ],
+      "price_range": "$18.99\u2013$125.99",
       "variants": [
         {
           "color": "",
-          "size": "",
+          "size": "8 Pack",
           "catalog_variant_id": null,
-          "sync_variant_id": 50391249453354,
+          "sync_variant_id": 52135991836970,
           "retail_price": "18.99",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "100 Pack",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52135991869738,
+          "retail_price": "125.99",
           "base_cost": null
         }
       ]
@@ -7030,15 +7041,15 @@
       "url": null,
       "colorways": [],
       "sizes": [
-        "4 Oz",
-        "8 Oz",
-        "1 Lb"
+        "4 oz",
+        "8 oz",
+        "1 lb"
       ],
       "price_range": "$29.99\u2013$65.99",
       "variants": [
         {
           "color": "",
-          "size": "4 Oz",
+          "size": "4 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 51887553315114,
           "retail_price": "29.99",
@@ -7046,7 +7057,7 @@
         },
         {
           "color": "",
-          "size": "8 Oz",
+          "size": "8 oz",
           "catalog_variant_id": null,
           "sync_variant_id": 51887553347882,
           "retail_price": "56.99",
@@ -7054,7 +7065,7 @@
         },
         {
           "color": "",
-          "size": "1 Lb",
+          "size": "1 lb",
           "catalog_variant_id": null,
           "sync_variant_id": 51887553380650,
           "retail_price": "65.99",
@@ -8659,6 +8670,96 @@
           "catalog_variant_id": null,
           "sync_variant_id": 51074938306858,
           "retail_price": "4.29",
+          "base_cost": null
+        }
+      ]
+    },
+    {
+      "platform": "shopify",
+      "product_id": "10233693471018",
+      "title": "Bodysurfer, Ventura \u2014 Black & White Fine Art Photography Print",
+      "status": "draft",
+      "external_id": "bodysurfer-ventura-black-white-fine-art-photography-print",
+      "thumbnail_url": "https://cdn.shopify.com/s/files/1/0710/9722/1418/files/16x20.jpg?v=1785210136",
+      "url": null,
+      "colorways": [],
+      "sizes": [
+        "8x10",
+        "11x14",
+        "16x20"
+      ],
+      "price_range": "$55.00\u2013$145.00",
+      "variants": [
+        {
+          "color": "",
+          "size": "8x10",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667100970,
+          "retail_price": "55.00",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "8x10",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667166506,
+          "retail_price": "55.00",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "8x10",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667199274,
+          "retail_price": "55.00",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "11x14",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667232042,
+          "retail_price": "85.00",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "11x14",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667264810,
+          "retail_price": "85.00",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "11x14",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667297578,
+          "retail_price": "85.00",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "16x20",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667330346,
+          "retail_price": "145.00",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "16x20",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667363114,
+          "retail_price": "145.00",
+          "base_cost": null
+        },
+        {
+          "color": "",
+          "size": "16x20",
+          "catalog_variant_id": null,
+          "sync_variant_id": 52137667395882,
+          "retail_price": "145.00",
           "base_cost": null
         }
       ]

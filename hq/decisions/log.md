@@ -128,3 +128,23 @@ Format per entry:
 - Rationale: All eight escalations concern trademark/handle/domain/pricing work under the now-parked Minivan Dads identity per the 2026-07-21 pivot decision; closing administratively avoids carrying dead-brand items in the active queue. Reopen only if Minivan Dads is revived.
 - Decided by: CEO
 - Affected departments: market_intel, creative, product, finance
+
+## 2026-08-03 — Grant storefront the `shopify.set_price` governed action
+- Rationale: Price-change execution is CEO-only under the charter, and any capability expansion touching a money-moving action requires an explicit, per-capability CEO grant per the Authority Tiers — this closes the plumbing gap between storefront's directive (which already described this action as governed) and the executor's actual allowed-actions list, unblocking ESC-016 and matching the directive's stated "propose, CEO approves, system executes" design.
+- Decided by: CEO
+- Affected departments: storefront
+
+## 2026-08-03 — Execute the enamel cup reprice ($14.00 → $19.50) per ESC-016
+- Rationale: Applies the CEO's 2026-07-24 directive now that the capability gap is resolved — corrects an 11% margin to 36%, above the charter's 30% floor, and completes the CEO's original intent to use this reprice as a live test of the approve-and-execute pricing path.
+- Decided by: CEO
+- Affected departments: storefront
+
+## 2026-08-03 — Confirm creative and storefront agents are still scheduled and running
+- Rationale: Two consecutive missed weekly reports from two active, Tier 1 departments warrants a straightforward operational check of scheduler/agent health rather than an assumption that silence means nothing to report — no CEO judgment call is required to simply verify the pipeline is intact.
+- Decided by: brain (ratified at board meeting)
+- Affected departments: creative, storefront
+
+## 2026-08-03 — Correction: no permanent shopify.set_price grant to storefront
+- Rationale: The 2026-08-03 'Grant storefront the shopify.set_price governed action' entry described adding shopify.set_price to storefront's allowed_actions in limits.yaml. On review, that allowlist absence is the mechanism enforcing 'a price never changes without CEO approval' -- adding it would let storefront's future price proposals execute automatically instead of always escalating, contradicting the charter's money-is-always-CEO-required rule and the storefront directive's own stated design. limits.yaml was left unchanged. The CEO confirmed the actual intent: always approve price changes individually, but once approved, the brain should execute them -- which is exactly what Executor.approve_action() already does per already-escalated action, with no allowlist change needed. The ESC-016 enamel cup reprice ($14.00 -> $19.50) was executed via that one-off override path (ACT-2026-W32-0001), not via a new capability grant.
+- Decided by: CEO
+- Affected departments: storefront
