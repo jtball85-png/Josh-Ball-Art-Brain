@@ -22,13 +22,23 @@ garage/research/print-border-mat-compatibility-2026-07-25.md for the full
 math. 8x10 is uniform on all 4 sides; 11x14/16x20 keep a light
 "bottom-weighted" mat touch (+0.125in on the bottom only) — see SHEETS.
 
-Resolution honesty: sheet canvas is always 300 DPI; the image's EFFECTIVE
-DPI (cropped source pixels / printed inches, per size) is measured and
-flagged: >=300 excellent · >=200 acceptable (FinerWorks floor) · <200 FAIL
-(do not sell at this size; never upscaled silently).
+Resolution honesty: the image's EFFECTIVE DPI (cropped source pixels /
+printed inches, per size) is measured and flagged: >=300 excellent ·
+>=200 acceptable (FinerWorks floor) · <200 FAIL. Never upscaled, ever —
+only downsampling is allowed, since downsampling discards excess real
+pixels while upscaling would invent detail the sensor never captured.
+>=300: the crop is downsampled to the standard 300 DPI shipping grid.
+200-299: the crop ships at its own native, un-resized pixel size, and
+the whole sheet (border math included) is built at that true DPI
+instead of a hardcoded 300, so physical sheet inches stay exact and the
+file's own DPI tag is honest for that specific file. <200: still
+written (for visual inspection) but as `{size}_DO-NOT-SELL.jpg`, never
+passed off as a sellable file under the plain `{size}.jpg` name.
 
-Output per master: ready/{name}/{size}.jpg (sRGB JPEG q95, 300 DPI tag) +
-proofs/{name}-proof.jpg contact sheet + a printed DPI/crop report.
+Output per master: ready/{name}/{size}.jpg (sRGB JPEG q95, DPI tag =
+300 when excellent, true native eff_dpi when acceptable; FAIL sizes go
+to {size}_DO-NOT-SELL.jpg instead) + proofs/{name}-proof.jpg contact
+sheet + a printed DPI/crop report.
 
 Two-stage master storage: candidates/ holds a master as soon as it clears
 this pipeline, before any physical print has been ordered and approved by
@@ -88,12 +98,31 @@ def derive(master_path: Path) -> list[str]:
         verdict = ("excellent" if eff_dpi >= 300 else
                    "acceptable" if eff_dpi >= 200 else "FAIL — too small")
 
-        sheet = Image.new("RGB", (round(sw_in * DPI), round(sh_in * DPI)), "white")
-        placed = cropped.resize((round(content_w * DPI), round(content_h * DPI)), Image.LANCZOS)
-        sheet.paste(placed, (round(border_lrt * DPI), round(border_lrt * DPI)))
-        out = out_dir / f"{name}.jpg"
-        sheet.save(out, "JPEG", quality=95, dpi=(DPI, DPI))
+        # Never upscale past native resolution — only downsampling is
+        # allowed. >=300: safe to downsample the crop's real pixels down
+        # to the 300 DPI shipping standard (discards excess detail,
+        # invents nothing). <300: ship the crop at its own native pixel
+        # size — the whole sheet is built at that true DPI instead of a
+        # hardcoded 300, so the file's DPI tag stays honest and sheet
+        # inches stay exact.
+        if eff_dpi >= 300:
+            sheet_dpi = DPI
+            placed = cropped.resize((round(content_w * sheet_dpi), round(content_h * sheet_dpi)), Image.LANCZOS)
+        else:
+            sheet_dpi = eff_dpi
+            placed = cropped
+
+        sheet = Image.new("RGB", (round(sw_in * sheet_dpi), round(sh_in * sheet_dpi)), "white")
+        sheet.paste(placed, (round(border_lrt * sheet_dpi), round(border_lrt * sheet_dpi)))
         sheet_files.append((name, sheet, verdict))
+
+        fail_note = ""
+        if verdict.startswith("FAIL"):
+            out = out_dir / f"{name}_DO-NOT-SELL.jpg"
+            fail_note = "  [DO-NOT-SELL — below FinerWorks' 200 DPI floor]"
+        else:
+            out = out_dir / f"{name}.jpg"
+        sheet.save(out, "JPEG", quality=95, dpi=(round(sheet_dpi), round(sheet_dpi)))
 
         crop_note = ""
         if crop_w < iw:
@@ -102,7 +131,7 @@ def derive(master_path: Path) -> list[str]:
             crop_note = f"  (cropped {(ih - crop_h) / ih * 100:.1f}% off top+bottom)"
         report.append(f"  {name:6} sheet {sw_in}x{sh_in}\"  border {border_lrt}\"/{border_bottom}\"b"
                       f"  image {content_w:.1f}x{content_h:.1f}\"  effective {eff_dpi:.0f} DPI"
-                      f"  -> {verdict}{crop_note}")
+                      f"  -> {verdict}{crop_note}{fail_note}")
 
     # proof contact sheet: the three layouts side by side, scaled down
     PROOFS.mkdir(exist_ok=True)
