@@ -27,3 +27,9 @@ position in this file):
 
 
 
+
+## ESC-027
+- Raised: 2026-08-07
+- Raised by: market_intel
+- Urgency: normal
+- Summary: ArtWalk Ventura 2026 (Sept 26–27, $0 application fee) application deadline remains unconfirmed after two cycles of checking zapplication.org (event ID 14550) — this week's page shows a "59 days remaining" countdown that is inconsistent with the stated event dates, suggesting the page itself may be unreliable to scrape; a human should call or check the site directly this week, as the window (whatever it is) is likely close.
