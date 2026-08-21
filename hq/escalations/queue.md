@@ -39,3 +39,9 @@ position in this file):
 - Raised by: market_intel
 - Urgency: urgent
 - Summary: ArtWalk Ventura 2026 (event ID 14550 on zapplication.org, previously reported Sept 26–27 dates, $0 application fee) — the page's countdown showed the identical "59 days 23 hours remaining" both this week and last week, confirming the countdown is stale/broken and cannot be trusted; a human needs to call the event directly or check the live (non-cached) site this week, as the real deadline is unknown and the window may already be closing or closed.
+
+## ESC-029
+- Raised: 2026-08-21
+- Raised by: market_intel
+- Urgency: urgent
+- Summary: ArtWalk Ventura's real artist-registration path (not ZAPP) has been found on artwalkventura.org — $100 (one day) or $150 (both days) for a 10×10 space, juried, and registration must be paid by Sept 1, 2026 (~10 days away) to be included in the printed event map; this is a spend decision (fee) requiring CEO sign-off before that window closes, and the CEO should also decide whether to pursue this given the short runway.
