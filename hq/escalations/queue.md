@@ -45,3 +45,9 @@ position in this file):
 - Raised by: market_intel
 - Urgency: urgent
 - Summary: ArtWalk Ventura's real artist-registration path (not ZAPP) has been found on artwalkventura.org — $100 (one day) or $150 (both days) for a 10×10 space, juried, and registration must be paid by Sept 1, 2026 (~10 days away) to be included in the printed event map; this is a spend decision (fee) requiring CEO sign-off before that window closes, and the CEO should also decide whether to pursue this given the short runway.
+
+## ESC-030
+- Raised: 2026-08-28
+- Raised by: market_intel
+- Urgency: urgent
+- Summary: ArtWalk Ventura's Sept. 1 print-inclusion deadline (artist fee $100 one day / $150 both days, 10×10 space, juried) is now ~4 days away with no refunds after Aug. 12 already passed — CEO needs to decide this week whether to register/pay via artwalkventura.org or let the window close, as this is the same spend decision raised last cycle now with materially less time to act.
